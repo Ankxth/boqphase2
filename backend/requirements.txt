@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+openpyxl
+pandas
+ollama
+groq
+python-multipart

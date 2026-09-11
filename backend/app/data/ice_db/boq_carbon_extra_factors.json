@@ -1,0 +1,96 @@
+{
+  "_status": "VERIFIED -- aluminium, glass, brick_clay, timber, and now structural_steel are all ifc_primary_source tier (see each entry's source field); structural_steel is confirmed correct at 2.5 kgCO2e/kg (IFC India Table 14, p.69 -- prior citation of p.67 was wrong) and is now CEA-adjustment-ready with a derived energy_derived_fraction_of_gwp of 0.76, same method used for rebar. aluminium, glass, and brick_clay also now carry energy_derived_fraction_of_gwp, derived the same way from IFC India Table 16 (Annex C), so all four IFC-primary-source materials in this file can now go through the same CEA grid adjustment concrete/rebar already get -- that wiring itself is not yet done, see cea_adjustment.py. aac_block, cement_plaster, ceramic_tile, and paint remain PLACEHOLDER, unchanged. timber remains ICE v4.1-sourced (not IFC), and is NOT CEA-adjustable under the current method -- see timber entry's note.",
+  "_note": "Concrete (rcc/pcc) and reinforcement steel are NOT in this file -- those are read from the existing ice_db_factors.json (ifc_india section, real Indian production data, CEA-adjusted) via app.services.ice_factors, so Phase 1 and Phase 2 share one factor source for those two materials rather than risking two numbers drifting apart. The categories in THIS file are the ones ice_db_factors.json does not cover at all yet.",
+  "structural_steel": {
+    "gwp_kgco2e_per_kg": 2.5,
+    "evidence_tier": "ifc_primary_source",
+    "energy_derived_fraction_of_gwp": 0.76,
+    "source": "IFC India Construction Materials Database (2017) Table 14, Annex A, p.69 -- 'Steel section' = 2.5 kgCO2e/kg, cradle-to-gate A1-A3, IPCC AR5 (corrected from a prior p.67 citation -- p.67 is the aluminium/brick section of the same table, not steel). Same India-specific source and methodology as reinforcement steel. energy_derived_fraction_of_gwp (0.76) derived from Table 16, Annex C, p.78: Electricity (0.50) + Fuels (1.40) of the 2.5 kgCO2e/kg total, same derivation method used for ifc_india.steel_rebar's 0.7538 (verified by reproducing that figure from rebar's own Table 16 row: (0.46+1.50)/2.6 = 0.7538, exact match). Not yet wired through ice_factors.py/ice_db_factors.json's structured lookup -- duplicated here for now, same as before."
+  },
+  "brick_clay": {
+    "gwp_kgco2e_per_kg": 0.39,
+    "density_kg_per_m3": 1800,
+    "evidence_tier": "ifc_primary_source",
+    "energy_derived_fraction_of_gwp": 0.9231,
+    "by_kiln_type_kgco2e_per_kg": {
+      "bulls_trench": 0.32,
+      "clamp": 0.57,
+      "high_draught_zigzag": 0.59,
+      "hoffman": 0.31,
+      "common_facing_blended_average": 0.39
+    },
+    "source": "IFC India Construction Materials Database (2017), Table 14 / Annex A, p.67-68. Cradle-to-gate A1-A3, IPCC AR5. Brick assumptions stakeholder-validated in Annex E by Godavari Power & Ispat and Godrej Construction. Default value (0.39) is the blended common/facing brick average; by_kiln_type breakdown available if the BOQ or classifier can identify kiln type. energy_derived_fraction_of_gwp (0.9231) derived from Table 16, Annex C, p.76: Electricity (0) + Fuels (0.36) of the 0.39 kgCO2e/kg total for 'Brick (common/facing)' -- applies to the default blended figure only; by-kiln-type fractions were not separately derived. Corroborating but NOT used as primary: Jay Jalaram Brick Works EPD (EPD-IES-0014544, Godhra, Gujarat, India, published 2024-07-29, third-party verified, International EPD System) declares 0.0805 kgCO2e/kg for their Bull's trench kiln bricks -- about 4x lower than IFC's Bull's trench figure for the same kiln type, likely due to a more efficient/biomass-heavy actual fuel mix than IFC's generic 2017 assumption (85% hard coal / 15% biomass). Logged here rather than substituted in, pending further investigation."
+  },
+  "aac_block": {
+    "gwp_kgco2e_per_kg": 0.40,
+    "density_kg_per_m3": 700,
+    "source": "Rough placeholder for autoclaved aerated concrete block. Not yet checked against a specific published source for Indian AAC production."
+  },
+  "cement_plaster": {
+    "gwp_kgco2e_per_kg": 0.20,
+    "density_kg_per_m3": 1900,
+    "assumed_thickness_m": 0.015,
+    "source": "Rough placeholder derived from typical cement-mortar cement content, approximate. Consider replacing with ice_db_factors.json's existing ICE Summary 'Cement and Mortar' -> 'Mortar and Screed' table (already extracted from ICE v4.1 -- e.g. 'Mortar (1:4)' ~0.15 kgCO2e/kg -- but not yet wired into this file). IFC India Table 14 also has a direct 'Cement based plaster' line at 0.44 kgCO2e/kg, roughly 2x this placeholder -- not yet applied here, flagged for a future verification pass."
+  },
+  "ceramic_tile": {
+    "gwp_kgco2e_per_kg": 0.70,
+    "areal_mass_kg_per_m2": 18.0,
+    "source": "Rough placeholder for tile + bedding mortar combined areal mass. Not yet checked against ICE's Ceramic sheet. IFC India Table 14 has 'Vitrified ceramic floor tiles' at 0.68 and 'Glazed ceramic floor tiles' at 0.67 kgCO2e/kg -- both close to this placeholder, not yet formally substituted in."
+  },
+  "paint": {
+    "gwp_kgco2e_per_kg": 2.6,
+    "coverage_kg_per_m2": 0.15,
+    "source": "Rough placeholder for 2-coat emulsion/distemper coverage. Not yet checked against ICE's Paint sheet."
+  },
+  "aluminium": {
+    "gwp_kgco2e_per_kg": 31,
+    "areal_mass_kg_per_m2": 12.0,
+    "evidence_tier": "ifc_primary_source",
+    "energy_derived_fraction_of_gwp": 0.8968,
+    "by_product_form_kgco2e_per_kg": {
+      "ingot": 31,
+      "extruded_profile": 33,
+      "extruded_profile_window_frame": 26,
+      "sheet": 32,
+      "profiled_cladding": 35,
+      "thin_composite_cladding": 18
+    },
+    "source": "IFC India Construction Materials Database (2017), Table 14 / Annex A, p.67. Cradle-to-gate A1-A3, IPCC AR5. Stakeholder-validated in Annex E by Hindalco Industries' CTO, Dr. Pradip Banerjee, who confirmed ~97% of India's large-scale smelters run on captive coal power -- the reason this figure is far higher than global-average aluminium factors (ICE v4.1's European-mix figure is ~6.6-8.1 kgCO2e/kg, not applicable to India's coal-heavy grid). Cross-checked against three other India-specific sources, all of which independently confirm aluminium is far higher than the previous 8.1 placeholder: Hindalco's own disclosed FY2016-20 operational GHG intensity (~19.8-20.6 tCO2e/tonne, corporate Scope 1+2, narrower boundary than a full LCA); NITI Aayog's January 2026 Aluminium Sector Decarbonisation roadmap (national average 20-21 tCO2/t, global average 15 tCO2/t); Global Efficiency Intelligence's 'Aluminum Climate Impact 2025' report (India 2023 data, 16.3 tonnes CO2/tonne primary, electrolysis+refining+PFC+anode only, excludes downstream). IFC's 31 was kept as primary for methodological consistency -- it's the only one of the four that's a full cradle-to-gate LCA on the same basis as every other verified factor in this catalog, rather than a narrower corporate-disclosure or process-only boundary. Default value uses the 'ingot' figure; by_product_form breakdown available if the BOQ or classifier can identify the specific product (window frame, cladding, sheet, etc.) -- window-frame extrusion (26) is meaningfully lower than profiled cladding (35), so using the single default may over- or under-state depending on what's actually being installed. energy_derived_fraction_of_gwp (0.8968) derived from Table 16, Annex C, p.75: Electricity (25) + Fuels (2.8) of the 31 kgCO2e/kg total, for the 'ingot' row specifically -- the by-product-form breakdown does not have separately-derived fractions, only the default 'ingot' figure does."
+  },
+  "glass": {
+    "gwp_kgco2e_per_kg": 1.2,
+    "areal_mass_kg_per_m2": 15.0,
+    "evidence_tier": "ifc_primary_source",
+    "energy_derived_fraction_of_gwp": 0.8,
+    "processed_glass_kgco2e_per_m2_6mm": {
+      "heat_tempered": 44.7,
+      "laminated": 93.6,
+      "igu_double_glazed": 52.7,
+      "printed": 47.2
+    },
+    "source": "IFC India Construction Materials Database (2017), Table 14 / Annex A, p.68 -- float glass, 1.2 kgCO2e/kg, cradle-to-gate A1-A3. Corroborated by Asahi India Glass (AIS) EPD of Processed Glass (EPD registration S-P-01411 / EPD-IES-0001411, Taloja plant, India, cradle-to-gate A1-A3, third-party verified by Metsims Sustainability Consulting, LCA by Thinkstep -- the same firm behind the IFC India database). The AIS EPD's own Table 13 attributes ~46% of its Heat Tempered Glass GWP (44.7 kgCO2e/m^2 at 6mm) to float glass production, backing out to roughly 1.4 kgCO2e/kg for the float-glass component alone -- consistent with IFC's 1.2. processed_glass_kgco2e_per_m2_6mm gives the AIS EPD's per-m^2 figures for finished products (tempered/laminated/IGU/printed) -- more representative of an actual glazing BOQ line than raw float glass, and areal-based rather than per-kg. NOTE: the AIS EPD's stated validity window (through 2024-04-18) has lapsed as of this update -- check for a renewed version before treating those per-m^2 figures as current. energy_derived_fraction_of_gwp (0.8) derived from Table 16, Annex C, p.77: Electricity (0.56) + Fuels (0.40) of the 1.2 kgCO2e/kg total for float glass -- this applies to raw float glass only; no separate fraction was derived for the processed-glass (m^2) figures, since those come from the AIS EPD rather than IFC's Table 16."
+  },
+  "timber": {
+    "gwp_kgco2e_per_kg": 0.49,
+    "evidence_tier": "ifc_primary_source",
+    "_wiring_status": "CONNECTED -- classifier.py has a _TIMBER_RE category (CATEGORY_TIMBER) matched against real Ecopolitan BOQ data (75 genuine joinery-item hits, 0 false positives after tightening the regex to require a joinery-product noun after wood(en)); engine.py's compute_line_gwp() has a CATEGORY_TIMBER branch. Real timber lines were found priced 100% in Nos (per-frame/door/window count), not mass or area, so the Nos path (using assumed_mass_kg_per_frame below) is the verified primary path; the kg/MT/m3/m2 paths are unverified fallbacks for BOQs that price timber differently.",
+    "not_cea_adjustable": "Unlike structural_steel/aluminium/glass/brick_clay above, this factor is NOT eligible for CEA grid adjustment under the current method. It's sourced from ICE v4.1 (UK/EU basis), not IFC India -- IFC's own timber figures were deliberately not used here because they're net-of-carbon-sequestration (negative values) and would need end-of-life modeling this pipeline doesn't have. CEA adjustment requires knowing the factor's assumed baseline grid mix, which is documented for IFC's ~2012 Indian data but not for ICE's UK data -- applying an adjustment without that denominator would mean fabricating a number, same principle already stated in cea_adjustment.py for the ICE concrete fallback table.",
+    "assumed_mass_kg_per_frame": 20.0,
+    "assumed_density_kg_per_m3": 650,
+    "assumed_areal_mass_kg_per_m2": 8.0,
+    "_assumed_unit_conversions_note": "assumed_mass_kg_per_frame (20 kg): typical Indian door/window frame (chowkhat) section ~100mm x 60mm, perimeter ~6.2m for a standard 2.1m x 1m door opening -> volume ~0.037 m3, at a mid-range timber density (~650 kg/m3, between softwood ~500 and hardwood ~800) -> ~24 kg; rounded down slightly to 20 kg to stay conservative for smaller window frames also captured by the same regex. Explicit documented assumption, same pattern as ASSUMED_TILE_SKIRTING_HEIGHT_M in engine.py -- not derived from a real BOQ or source, flag for replacement with actual measured frame sizes if available. assumed_density_kg_per_m3 (650): generic mid-range timber density, consistent with the softwood/hardwood split in excluding_carbon_storage_kgco2e_per_kg below; used only as an unverified fallback for volume-priced timber lines. assumed_areal_mass_kg_per_m2 (8.0 kg/m2): approximates a ~12mm plywood/board panel at ~650 kg/m3 (0.012m x 650 = 7.8, rounded to 8.0); used only as an unverified fallback for area-priced timber lines (e.g. wall paneling).",
+    "excluding_carbon_storage_kgco2e_per_kg": {
+      "generic_average": 0.49,
+      "softwood": 0.26,
+      "hardwood": 0.31,
+      "plywood": 0.68,
+      "particle_board": 0.66,
+      "mdf": 0.86,
+      "clt_cross_laminated_timber": 0.25,
+      "glulam": 0.28,
+      "osb": 0.46,
+      "chipboard": 0.40
+    },
+    "source": "ICE Database v4.1 (Circular Ecology / University of Bath, Oct 2025), Timber sheet, 'excluding carbon storage' section. Cradle-to-gate A1-A3. Deliberately NOT using ICE's 'including carbon storage' figures (which are negative, e.g. generic average -1.03 kgCO2e/kg) or IFC India Table 14's timber lines (also net-of-sequestration, e.g. air-dried sawn timber -1.3, kiln-dried -0.43) -- both require modeling end-of-life to be valid and could produce misleadingly negative totals in a pipeline that doesn't track EOL yet. generic_average (0.49) is the fallback for BOQ lines that just say 'timber'/'wood' without specifying product form; product-specific values should be used when the line item names a form (plywood, MDF, etc.)."
+  }
+}

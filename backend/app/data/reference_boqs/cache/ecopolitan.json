@@ -1,0 +1,49 @@
+{
+  "project_slug": "ecopolitan",
+  "extracted_at": "2026-08-20T06:53:09.395340+00:00",
+  "source_file": "Ecopolitan_BOQ.xlsx",
+  "materials": {
+    "pcc": {
+      "deterministic": {
+        "quantity": 1760.55,
+        "unit": "Cum",
+        "line_items": 3,
+        "cost_total": 10582619.489999998,
+        "confidence": "high"
+      }
+    },
+    "rcc": {
+      "deterministic": {
+        "quantity": 77745.94000000009,
+        "unit": "Cum",
+        "line_items": 167,
+        "cost_total": 552033997.98,
+        "confidence": "high"
+      }
+    },
+    "reinforcement_steel": {
+      "deterministic": {
+        "quantity": 8422.25,
+        "unit": "MT",
+        "line_items": 2,
+        "cost_total": 588713836.75,
+        "confidence": "high"
+      }
+    }
+  },
+  "unclassified_row_count": 110,
+  "sheet_diagnostics": {
+    "Grand summary": "skipped_supplementary_sheet",
+    "Summary_Final": "skipped_supplementary_sheet",
+    "Part-A & B_BOQ": "header_found:{'item_no': 0, 'description': 1, 'uom': 2, 'rate': 3, 'quantity': 4, 'amount': 7}",
+    "Derived Items_RMC & Others": "skipped_supplementary_sheet",
+    "Derived Items_UPVC": "skipped_supplementary_sheet",
+    "Working_UPVC": "skipped_supplementary_sheet",
+    "NT_01": "skipped_supplementary_sheet",
+    "NT_02": "skipped_supplementary_sheet",
+    "NT_03": "skipped_supplementary_sheet",
+    "Compound Wall Works": "skipped_supplementary_sheet",
+    "Ext Dev. Works": "skipped_supplementary_sheet",
+    "RFA": "skipped_supplementary_sheet"
+  }
+}

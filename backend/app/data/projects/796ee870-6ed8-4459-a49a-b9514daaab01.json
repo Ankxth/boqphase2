@@ -1,0 +1,116 @@
+{
+  "project_id": "796ee870-6ed8-4459-a49a-b9514daaab01",
+  "mandatory": {
+    "gfa_sqm": {
+      "value": 50000.0,
+      "source": "user-entered",
+      "confidence": 1.0
+    },
+    "location": {
+      "value": null,
+      "source": "unset",
+      "confidence": 0.0
+    },
+    "structural_system_type": {
+      "value": "rcc_frame",
+      "source": "user-entered",
+      "confidence": 1.0
+    }
+  },
+  "tier2": {
+    "typology": {
+      "value": "residential",
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "num_floors": {
+      "value": 50,
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "has_basement": {
+      "value": true,
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "basement_count": {
+      "value": 2,
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "foundation_type": {
+      "value": "pile",
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "finish_spec_level": {
+      "value": "standard",
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "parking_type": {
+      "value": "underground",
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "parking_area_sqm": {
+      "value": 5000.0,
+      "source": "llm-estimated",
+      "confidence": 0.4
+    }
+  },
+  "tier3": {
+    "concrete_grade_mix": {
+      "value": "M35",
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "cement_type": {
+      "value": "OPC",
+      "source": "user-entered",
+      "confidence": 1.0
+    },
+    "steel_reinforcement_ratio_kg_per_sqm": {
+      "value": 211.32,
+      "source": "own-boq-extracted",
+      "confidence": 0.9
+    },
+    "facade_type": {
+      "value": "cladding",
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "glazing_pct": {
+      "value": 20.0,
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "mep_complexity": {
+      "value": "standard",
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "green_cert_target": {
+      "value": "LEED_Gold",
+      "source": "llm-estimated",
+      "confidence": 0.4
+    },
+    "site_condition": {
+      "value": "normal_soil",
+      "source": "llm-estimated",
+      "confidence": 0.4
+    }
+  },
+  "_derived": {
+    "steel_cost_per_kg": 68.49563032367973,
+    "steel_cost_source": "own_boq",
+    "concrete_vol_per_sqm": 1.690291600000001,
+    "matched_reference": "own_boq",
+    "concrete_cost_per_m3": 7533.158053912114,
+    "concrete_cost_source": "own_boq",
+    "own_boq_extraction_meta": {
+      "source_file": "tmpptt27fs0.xlsx",
+      "unclassified_row_count": 0
+    }
+  }
+}

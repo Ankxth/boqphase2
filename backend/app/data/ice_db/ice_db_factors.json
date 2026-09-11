@@ -1,0 +1,81 @@
+{
+  "ice_db_version": "V4.1 - Oct 2025",
+  "concrete": {
+    "unit": "kgCO2e per kg of concrete",
+    "note": "M-grade number = cube strength (MPa), matches ICE's second number in its x/y (cylinder/cube) class labels. Source: Concrete sheet, 'By Strength Class' section. Used as FALLBACK ONLY when cement_type is unknown but M-grade is known -- ifc_india.concrete is now the primary source. See ice_factors.py for selection logic.",
+    "by_grade": {
+      "uk_average_cement": {
+        "M10": 0.08714664250597447,
+        "M15": 0.09417466980381356,
+        "M20": 0.10106030596588982,
+        "M25": 0.10868092490927672,
+        "M30": 0.11548023907564679,
+        "M35": 0.12228881572230957,
+        "M40": 0.1341708640708405,
+        "M45": 0.1443346867478302,
+        "M50": 0.15446924778855348
+      },
+      "cem_i": {
+        "M10": 0.08986171413880877,
+        "M15": 0.09701113259240507,
+        "M20": 0.1041002578799578,
+        "M25": 0.11170495534437502,
+        "M30": 0.11873999718229167,
+        "M35": 0.12574544134895832,
+        "M40": 0.13798030391458332,
+        "M45": 0.1484613389659375,
+        "M50": 0.15896506556525
+      }
+    },
+    "default_density_kg_per_m3": 2400
+  },
+  "steel": {
+    "unit": "kgCO2e per kg of steel",
+    "rebar": {
+      "value": 1.72,
+      "source": "Steel, Rebar -- worldsteel 2023 study, world average, cradle-to-gate (Module A1-3). Kept as FALLBACK -- ifc_india.steel_rebar is now the primary source (real Indian production data), see ice_factors.py."
+    }
+  },
+  "ifc_india": {
+    "source": "IFC India Construction Materials Database -- Methodology Report (IFC/World Bank Group, Nov 2017, built by thinkstep/Sphera using GaBi). Cradle-to-gate (EN 15804 Modules A1-A3), GWP per IPCC AR5.",
+    "note": "PRIMARY source for concrete and steel rebar factors as of this update -- real India-modeled production data, not adjusted-from-elsewhere. Concrete is given per cement type (OPC/PSC/PPC), NOT per M-grade -- this is a real precision tradeoff vs. ICE's grade-based table, not a strict improvement. Grid-mix assumption embedded in this data is ~2012 (57% hard coal, GaBi 2016 dataset) -- see cea.baseline_grid_factor for the adjustment this implies.",
+    "concrete": {
+      "unit": "kgCO2e per kg of ready-mix concrete",
+      "by_cement_type": {
+        "OPC": {
+          "gwp_kgco2e_per_kg": 0.11,
+          "energy_derived_fraction_of_gwp": 0.016,
+          "display_name": "Ready mix concrete with ordinary Portland cement (OPC)"
+        },
+        "PSC": {
+          "gwp_kgco2e_per_kg": 0.089,
+          "energy_derived_fraction_of_gwp": 0.0198,
+          "display_name": "Ready mix concrete with Portland slag cement (25% GGBS)"
+        },
+        "PPC": {
+          "gwp_kgco2e_per_kg": 0.084,
+          "energy_derived_fraction_of_gwp": 0.021,
+          "display_name": "Ready mix concrete with fly-ash cement (30% pozzolana)"
+        }
+      },
+      "default_density_kg_per_m3": 2400
+    },
+    "steel_rebar": {
+      "unit": "kgCO2e per kg of steel",
+      "gwp_kgco2e_per_kg": 2.6,
+      "energy_derived_fraction_of_gwp": 0.7538,
+      "display_name": "Steel reinforcement (steel rebar)"
+    }
+  },
+  "cea": {
+    "source": "Central Electricity Authority (CEA) CO2 Baseline Database, v21.0, Nov 2025",
+    "unit": "tCO2/MWh",
+    "current_grid_factor": 0.711725483062134,
+    "current_grid_factor_year": "FY2024-25",
+    "current_grid_factor_field": "weighted_average_grid_emission_rate_incl_RES_captive",
+    "baseline_grid_factor": 0.774,
+    "baseline_grid_factor_year": "FY2013-14",
+    "baseline_grid_factor_note": "IFC's embedded grid-mix assumption is dated to ~2012 generation data (GaBi 2016 dataset). CEA's published series does not extend back to 2012 -- FY2013-14 (0.774 tCO2/MWh) is the NEAREST available published figure, used as an approximation, not an exact 2012 value. This is a documented estimate, not a precise historical match.",
+    "note": "Only applied to ifc_india-sourced factors' energy-derived fraction (see cea_adjustment.py). NOT applied to the ICE fallback table, since the UK/EU grid baseline ICE assumed has not been extracted from ICE's own methodology documentation -- applying an adjustment without that denominator would mean fabricating a number, so ICE fallback factors are left unadjusted and this gap is stated plainly rather than guessed at."
+  }
+}

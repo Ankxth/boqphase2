@@ -1,0 +1,43 @@
+{
+  "project_slug": "botanico",
+  "extracted_at": "2026-08-20T06:53:00.380757+00:00",
+  "source_file": "Botanico_BOQ.xlsx",
+  "materials": {
+    "reinforcement_steel": {
+      "deterministic": {
+        "quantity": 10566.0,
+        "unit": "MT",
+        "line_items": 2,
+        "cost_total": 723724830.0,
+        "confidence": "high"
+      }
+    },
+    "pcc": {
+      "deterministic": {
+        "quantity": 4528.42,
+        "unit": "Cum",
+        "line_items": 3,
+        "cost_total": 25207014.0,
+        "confidence": "high"
+      }
+    },
+    "rcc": {
+      "deterministic": {
+        "quantity": 84514.58000000005,
+        "unit": "Cum",
+        "line_items": 184,
+        "cost_total": 636661689.0,
+        "confidence": "high"
+      }
+    }
+  },
+  "unclassified_row_count": 121,
+  "sheet_diagnostics": {
+    "Grand summary ": "skipped_supplementary_sheet",
+    "Part-A & B_BOQ ": "header_found:{'item_no': 0, 'description': 1, 'uom': 2, 'rate': 3, 'quantity': 4, 'amount': 5}",
+    "Derived Items": "skipped_supplementary_sheet",
+    "NT#01": "skipped_supplementary_sheet",
+    "RFA": "skipped_supplementary_sheet",
+    "M35 Grade Rate Calculation ": "skipped_supplementary_sheet"
+  }
+}

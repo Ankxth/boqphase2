@@ -1,0 +1,93 @@
+{
+  "note": "Seeded ONLY with substitutions where both the base and substitute factor come from an already-loaded primary source (IFC India Construction Materials Database 2017), a third-party-verified EPD, or an already-flagged placeholder consistent with the rest of this codebase's factor conventions -- nothing here is an invented number. Every entry now carries an 'evidence_tier' field (supplier_epd_verified / ifc_primary_source / placeholder_source) so the frontend can rank confidence. See evidence_log below for sources that were checked and NOT included, with the reason why -- this is deliberate, not an oversight: a source search that finds a real EPD showing no carbon benefit is still useful information and is kept on record rather than discarded.",
+  "substitutions": [
+    {
+      "id": "opc_to_psc",
+      "base_category": "rcc",
+      "base_cement_type": "OPC",
+      "substitute_cement_type": "PSC",
+      "substitute_label": "PSC (25% GGBS slag blend)",
+      "max_recommended_pct": 50,
+      "evidence_tier": "ifc_primary_source",
+      "source": "IFC India Construction Materials Database 2017 (both OPC and PSC factors, Table 14) for the GWP figures; IS 455 / common Indian RMC-plant practice for the recommended replacement ceiling.",
+      "reasoning": "GGBS (slag) cement replacement is standard, code-recognized practice in Indian RMC -- IFC's own PSC factor already reflects a real ~25% GGBS blend at 0.089 kgCO2e/kg vs OPC's 0.11, roughly 19% lower per kg before grade scaling. Replacement much above 50-60% starts trading early-strength gain for later-age strength gain, which changes formwork-strike timing and curing duration -- a real but manageable structural-schedule tradeoff, not a strength deficit at design age.",
+      "structural_caveat": "Slower early strength gain -- extend curing period and formwork-strike time; verify against the specific grade's IS 456 mix design before applying above the recommended ceiling.",
+      "requires_engineering_review_above_max": true
+    },
+    {
+      "id": "opc_to_ppc",
+      "base_category": "rcc",
+      "base_cement_type": "OPC",
+      "substitute_cement_type": "PPC",
+      "substitute_label": "PPC (30% fly-ash / pozzolana blend)",
+      "max_recommended_pct": 30,
+      "evidence_tier": "ifc_primary_source",
+      "source": "IFC India Construction Materials Database 2017 (both OPC and PPC factors, Table 14) for the GWP figures; IS 1489 for the recommended replacement ceiling.",
+      "reasoning": "Fly-ash (pozzolana) cement replacement is the most common blended cement in Indian construction today -- IFC's own PPC factor (0.084 kgCO2e/kg) is about 24% lower than OPC's per kg before grade scaling. IS 1489 and typical Indian RMC practice cap fly-ash content around 25-35% for general structural use; higher fractions exist in specialty low-heat mixes but need a dedicated mix-design review.",
+      "structural_caveat": "Slower early strength gain than OPC, similar to PSC -- extend curing time; confirm against the project's mix design above the recommended ceiling.",
+      "requires_engineering_review_above_max": true
+    },
+    {
+      "id": "brick_to_aac_block",
+      "base_category": "brickwork",
+      "substitute_category": "blockwork",
+      "substitute_label": "AAC (autoclaved aerated concrete) block",
+      "max_recommended_pct": 100,
+      "evidence_tier": "placeholder_source",
+      "source": "app/data/ice_db/boq_carbon_extra_factors.json (brick_clay, aac_block) -- PLACEHOLDER-quality factors, not yet verified line-by-line against IFC/ICE the way concrete/steel were. This substitution's carbon-savings figure inherits that same placeholder-quality caveat.",
+      "reasoning": "AAC block has a genuinely lower embodied carbon profile than fired clay brick (lower density, lower firing energy) and is IS 2185-recognized for both infill and load-bearing masonry up to defined strength classes -- this is a well-established, common substitution in Indian construction, not an exotic one. Unlike the cement-blend substitutions above, this isn't a percentage BLEND of one wall -- it represents converting a percentage of the project's total brickwork SCOPE to block instead.",
+      "structural_caveat": "AAC block used in any LOAD-BEARING wall (not just infill/partition) requires the block's strength class to be verified against the wall's structural design by a qualified engineer, regardless of what percentage of the project this substitution is applied to.",
+      "requires_engineering_review_above_max": false,
+      "always_requires_review_if_load_bearing": true
+    },
+    {
+      "id": "steel_ifc_to_ars_eaf_recycled",
+      "base_category": "reinforcement_steel",
+      "substitute_gwp_kgco2e_per_kg_fixed": 0.592,
+      "substitute_label": "ARS 550D / ARS CRS 550D TMT rebar (98% recycled steel, EAF, EPD-verified)",
+      "max_recommended_pct": 100,
+      "evidence_tier": "supplier_epd_verified",
+      "requires_supplier_match": "ARS Steels and Alloy International Pvt Ltd, Gummidipoondi, Thiruvallur Dist, Tamil Nadu -- or another supplier holding an equivalent third-party-verified EPD at comparable A1-A3 performance. Do NOT apply this factor to generic 'recycled' or 'EAF' rebar from an unverified supplier -- the 592 kgCO2e/tonne figure is specific to this manufacturer's declared, verified production data, not a general EAF/recycled-steel constant.",
+      "source": "EPD-IES-0012057, The International EPD System / EPD India, 'TMT Bars - ARS 550D, ARS CRS 550D (98% Recycled Steel)', ARS Steels and Alloy International Pvt Ltd. Published 2024-04-22, revised 2025-03-30 (data-quality assessment update noted 2025-10-24 per the EPD's own Version History section -- the two dates are inconsistent within the source document itself, both are recorded here for transparency). Valid until 2030-03-29. Third-party verified by Prabodha Acharya, approved by The International EPD System. Declared unit 1000kg, cradle-to-gate A1-A3, EN15804+A2/PCR 2019:14 (EF 3.1 method). GWP-total A1-A3 = 592 kgCO2e/tonne (p.14 of the EPD). Recycled content 97.5% calculated from the EPD's own content-information table (816.6kg local scrap + 245.3kg imported scrap / 1089kg total, p.13; EPD prose separately describes this as 'over 98%'). Renewable electricity share 28.45% (p.12 and p.18). BIS 1786:2008 certified (yield strength 560 N/mm2 min vs 550 min required, tensile 630 min vs 600 min required, p.5) -- usable as a directly specifiable product in Indian RCC construction, not just a benchmark figure.",
+      "reasoning": "Same material, verified lower-carbon manufacturing route: this is TMT rebar (not a different material), produced from 97.5% recycled scrap via electric arc furnace with a real, third-party-verified cradle-to-gate GWP of 592 kgCO2e/tonne against this app's current IFC India baseline of 2600 kgCO2e/tonne for reinforcement_steel -- a 77.2% reduction. Unlike the cement-blend entries above, this is not a blend ratio of the SAME product; it represents switching the project's specified rebar supplier/product to this verified one for the given percentage of total rebar quantity.",
+      "structural_caveat": "Reinforcement steel is structural by definition in essentially every application -- engineering sign-off on mechanical properties (yield/tensile strength, elongation, weldability) is required for this substitution regardless of the percentage applied, not just above a recommended ceiling. ARS 550D/CRS 550D meets BIS 1786-2008 minimums with margin (see source), but grade compatibility with the project's structural design must still be confirmed by the engineer of record before specifying.",
+      "requires_engineering_review_above_max": false,
+      "always_requires_review_if_load_bearing": true
+    }
+  ],
+  "evidence_log": [
+    {
+      "checked": "Tata Steel Tiscon - Steel Rebar",
+      "manufacturer": "Tata Steel Limited, India",
+      "epd_registration": "S-P-05018, EPD International AB",
+      "route": "100% Blast Furnace (BF) + Basic Oxygen Furnace (BOF)",
+      "gwp_a1_a3_kgco2e_per_tonne": 2757,
+      "included": false,
+      "reason": "Real, valid, India-specific, third-party-verified EPD (valid until 2027-07-07) -- but its own declared A1-A3 GWP (2757 kgCO2e/t) is HIGHER than this app's current IFC baseline (2600 kgCO2e/t), so it offers no carbon-reduction benefit as a substitution. Kept on record as a genuine BOF-route reference point and as evidence that not every named-supplier EPD beats the baseline -- 'has an EPD' is not by itself a reason to add a catalog entry.",
+      "figures_verification_method": "Automated document fetch/extraction, not manually page-verified like the ARS entry -- treat the exact figure as approximate pending a full read if this is ever reconsidered.",
+      "source_url": "https://www.tatasteel.com/media/16247/tata-tiscon-environmental-product-declaration_final.pdf"
+    },
+    {
+      "checked": "Raajratna Metal Industries - Steel Rebar",
+      "manufacturer": "Raajratna Metal Industries Limited, Ahmedabad, India",
+      "epd_registration": "S-P-09225, The International EPD System (Indian Regional Hub)",
+      "route": "Hot rolling, ~23% post-consumer scrap input (230kg/tonne) -- not primarily EAF-recycled",
+      "gwp_a1_a3_kgco2e_per_tonne": 2763,
+      "included": false,
+      "reason": "Real, valid, India-specific EPD (valid until 2028-07-07) -- but at only ~23% recycled content its A1-A3 GWP is essentially the same as the current IFC baseline, no meaningful reduction. Useful confirming evidence for the project's own rule that recycled-content percentage alone doesn't predict carbon savings -- it's the manufacturing route and electricity source that matter, and this producer's route doesn't achieve what ARS's does.",
+      "figures_verification_method": "Automated document fetch/extraction, not manually page-verified -- the fetched fossil-GWP figure (2784) was slightly higher than the fetched total-GWP figure (2763), which is unusual and unexplained; do not treat these two figures as fully reconciled without a manual read.",
+      "source_url": "https://raajratna.com/wp-content/uploads/2019/02/Raajratna-EPD.pdf"
+    },
+    {
+      "checked": "Thames Reinforcements Ltd - Cut & Bent Rebar (EAF, 98.6% recycled)",
+      "manufacturer": "Thames Reinforcements Ltd, Nottingham, UK",
+      "epd_registration": "HUB-0211, EPD Hub",
+      "route": "Electric Arc Furnace (EAF)",
+      "gwp_a1_a3_kgco2e_per_tonne": 487,
+      "included": false,
+      "reason": "Real, valid, third-party-verified EPD (valid until 2027-12-16) showing an EVEN LOWER GWP than ARS (487 vs 592 kgCO2e/t) at comparable recycled content (98.6%) -- genuinely the strongest evidence found that low-carbon EAF rebar is achievable. NOT included as a selectable catalog entry because: (1) UK production/grid-mix data, not India -- this app's CEA adjustment framework and geographic scope are India-specific, so a UK figure isn't directly comparable to the CEA-adjusted IFC baseline the way ARS's India figure is; (2) product is certified to EN10080 (UK/EU), not BIS 1786 -- not directly specifiable as-is in Indian RCC construction, which requires BIS-certified rebar; (3) importing UK rebar for an Indian project is not a realistic sourcing path in the vast majority of cases. Kept as a documented international benchmark -- worth revisiting if the app ever supports non-India projects or if an equivalent India-based EAF producer with a similarly low figure is found.",
+      "figures_verification_method": "Automated document fetch/extraction, cross-checked with two independent fetch passes returning the same A1-A3 total (4.87E+02) and fossil (4.85E+02) figures -- moderate confidence, still not a manual page-by-page read.",
+      "source_url": "https://manage.epdhub.com/declarations/file/download/epdSigned/261/"
+    }
+  ]
+}

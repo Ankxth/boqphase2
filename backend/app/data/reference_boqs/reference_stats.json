@@ -1,0 +1,14 @@
+{
+  "botanico": {
+    "structural_system_type": "rcc_frame",
+    "typology": "residential",
+    "gfa_sqm": 181150.0,
+    "priced_year": 2021
+  },
+  "ecopolitan": {
+    "structural_system_type": "rcc_frame",
+    "typology": "residential",
+    "gfa_sqm": 180169.0,
+    "priced_year": null
+  }
+}
