@@ -23,7 +23,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.services.boq_carbon.engine import FloorAreaBasis, calculate_from_boq
 from app.services.boq_carbon.parser import extract_from_first_primary_sheet
-from app.services.boq_carbon.substitution_catalog import load_catalog
+from app.services.supplier_catalog import load_catalog
 from app.services.boq_carbon.substitution_engine import (
     BoqSubstitutionResponse,
     SubstitutionRequest,

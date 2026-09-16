@@ -1,5 +1,5 @@
 {
-  "project_id": "94d252ce-f557-4a02-a608-472068d171f4",
+  "project_id": "e584d325-8347-4397-a4b9-f9b861220909",
   "mandatory": {
     "gfa_sqm": {
       "value": 50000.0,
@@ -20,33 +20,33 @@
   "tier2": {
     "typology": {
       "value": "residential",
-      "source": "user-entered",
-      "confidence": 1.0
+      "source": "llm-estimated",
+      "confidence": 0.4
     },
     "num_floors": {
-      "value": 14,
-      "source": "user-entered",
-      "confidence": 1.0
+      "value": 40,
+      "source": "llm-estimated",
+      "confidence": 0.4
     },
     "has_basement": {
       "value": true,
-      "source": "user-entered",
-      "confidence": 1.0
+      "source": "llm-estimated",
+      "confidence": 0.4
     },
     "basement_count": {
-      "value": 1,
+      "value": 2,
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "foundation_type": {
-      "value": "raft",
-      "source": "user-entered",
-      "confidence": 1.0
+      "value": "pile",
+      "source": "llm-estimated",
+      "confidence": 0.4
     },
     "finish_spec_level": {
       "value": "standard",
-      "source": "user-entered",
-      "confidence": 1.0
+      "source": "llm-estimated",
+      "confidence": 0.4
     },
     "parking_type": {
       "value": "underground",
@@ -61,7 +61,7 @@
   },
   "tier3": {
     "concrete_grade_mix": {
-      "value": "M30",
+      "value": "M35",
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -71,17 +71,17 @@
       "confidence": 0.4
     },
     "steel_reinforcement_ratio_kg_per_sqm": {
-      "value": 58.33,
-      "source": "boq-matched",
-      "confidence": 0.6
+      "value": 115.0,
+      "source": "llm-estimated",
+      "confidence": 0.4
     },
     "facade_type": {
-      "value": "brick",
+      "value": "cladding",
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "glazing_pct": {
-      "value": 12.0,
+      "value": 20.0,
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -91,7 +91,7 @@
       "confidence": 0.4
     },
     "green_cert_target": {
-      "value": "IGBC_Green",
+      "value": "LEED_Gold",
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -101,12 +101,6 @@
       "confidence": 0.4
     }
   },
-  "_derived": {
-    "steel_cost_per_kg": 68.49563032367973,
-    "steel_cost_source": "botanico",
-    "concrete_vol_per_sqm": 0.4665447419265804,
-    "matched_reference": "botanico",
-    "concrete_cost_per_m3": 7533.158053912114,
-    "concrete_cost_source": "botanico"
-  }
+  "_derived": {},
+  "company_id": "provident"
 }

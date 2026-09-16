@@ -19,6 +19,13 @@ carries requires_engineering_review=True and the catalog's own sourced
 structural_caveat text, so the frontend can show a "not recommended"
 warning with a real reason rather than a generic one.
 
+Workstream 08: the catalog itself now lives behind one shared module,
+app/services/supplier_catalog.py -- this file still works entirely in
+the raw catalog-entry dict shape (get_entry()) since that's what
+_recompute_line_at_substitute() below needs; see that module's docstring
+for the uniform SupplierAlternative view used elsewhere (Phase 1's new
+supplier-steel suggestion, and any future chatbot tool surface).
+
 Combining multiple substitutions: only done when the sets of BOQ rows
 each substitution actually affects are pairwise disjoint. Two
 substitutions that both target the same OPC-classified rcc rows (e.g.
@@ -37,7 +44,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from app.services.boq_carbon.engine import BoqCarbonResult, compute_line_gwp, _MASS_KG_UNITS, _MASS_MT_UNITS
-from app.services.boq_carbon.substitution_catalog import get_substitution
+from app.services.supplier_catalog import get_entry as get_substitution
 
 
 class SubstitutionRequest(BaseModel):

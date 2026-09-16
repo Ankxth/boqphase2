@@ -1,37 +1,15 @@
-"""Loader for the material substitution catalog -- see
-app/data/ice_db/substitution_catalog.json for the seed data and its own
-notes on why it's currently limited to cement blends and brick->block
-(the only substitutions with a real sourced factor on both sides right
-now; recycled-steel and low-VOC-paint substitutions are deliberately
-left out until a real figure is sourced for either).
+"""Workstream 08: superseded by the shared app/services/supplier_catalog.py
+module -- kept as a thin backward-compatible delegator (same three
+function names/signatures as before) so nothing that already imports from
+this path breaks. New code should import from app.services.supplier_catalog
+directly; this module adds nothing of its own anymore.
 """
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-from typing import Optional
+from app.services.supplier_catalog import CATALOG_PATH  # re-exported, unchanged
+from app.services.supplier_catalog import get_entry as get_substitution
+from app.services.supplier_catalog import list_entries_for_category as list_substitutions_for_category
+from app.services.supplier_catalog import load_catalog
 
-CATALOG_PATH = (
-    Path(__file__).resolve().parent.parent.parent / "data" / "ice_db" / "substitution_catalog.json"
-)
-
-
-def load_catalog() -> list[dict]:
-    with open(CATALOG_PATH, "r") as f:
-        data = json.load(f)
-    return data["substitutions"]
-
-
-def get_substitution(substitution_id: str) -> Optional[dict]:
-    for entry in load_catalog():
-        if entry["id"] == substitution_id:
-            return entry
-    return None
-
-
-def list_substitutions_for_category(base_category: str) -> list[dict]:
-    """All catalog entries whose base_category matches -- what the
-    frontend would show as available substitution options for a given
-    material category found in a calculated BOQ result."""
-    return [e for e in load_catalog() if e["base_category"] == base_category]
+__all__ = ["CATALOG_PATH", "load_catalog", "get_substitution", "list_substitutions_for_category"]

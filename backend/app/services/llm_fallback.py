@@ -50,6 +50,7 @@ from app.schemas.project_schema import (
     SiteCondition,
     Typology,
 )
+from app.services import company_history
 from app.services.llm_client import LLMUnavailableError, chat_json
 
 LLM_ESTIMATED_CONFIDENCE = 0.4  # lower than boq-matched (0.6) -- generic guess, not comparable-project data
@@ -106,13 +107,56 @@ def _known_fields_summary(project: ProjectSchema) -> dict:
     return known
 
 
-def _build_prompt(known: dict, unset_field_names: list[str]) -> str:
+def _company_history_section(history: Optional[dict]) -> str:
+    """Workstream 06: renders this company's own historical project
+    range as an extra prompt section, so an LLM estimate is anchored to
+    what THIS company has actually built rather than only a generic
+    Indian-construction default. Returns "" (no section at all) when
+    there's no usable history yet -- a brand-new company with zero
+    reference projects should get exactly the same prompt as before this
+    workstream, not a section that says "no data" (which would just be
+    noise for the model).
+    """
+    if not history or not history.get("n_reference_projects"):
+        return ""
+
+    lines = [
+        "\nThis company's own project history (from its Phase 2 uploads -- prefer this "
+        "over the generic ranges above wherever it's available, since it reflects what "
+        "THIS company actually builds):",
+        f"- {history['n_reference_projects']} of this company's own past projects are on file.",
+    ]
+    if history.get("typology_counts"):
+        lines.append(f"- Typology mix: {history['typology_counts']}")
+    if history.get("structural_system_type_counts"):
+        lines.append(f"- Structural system mix: {history['structural_system_type_counts']}")
+    if history.get("gfa_sqm_range"):
+        r = history["gfa_sqm_range"]
+        lines.append(f"- GFA range across these projects: {r['min']:.0f}-{r['max']:.0f} sqm (avg {r['avg']:.0f}, n={r['n']}).")
+    if history.get("steel_reinforcement_ratio_kg_per_sqm"):
+        r = history["steel_reinforcement_ratio_kg_per_sqm"]
+        lines.append(
+            f"- This company's own steel reinforcement ratio has ranged {r['min']:.1f}-{r['max']:.1f} "
+            f"kg/sqm (avg {r['avg']:.1f}, from {r['n']} of its own projects) -- prefer this range over "
+            f"the generic tier-based bands above when estimating tier3.steel_reinforcement_ratio_kg_per_sqm."
+        )
+    if history.get("concrete_vol_per_sqm"):
+        r = history["concrete_vol_per_sqm"]
+        lines.append(
+            f"- This company's own concrete volume has ranged {r['min']:.3f}-{r['max']:.3f} m3/sqm "
+            f"(avg {r['avg']:.3f}, from {r['n']} of its own projects) -- useful context for how dense "
+            f"this company's structures typically are."
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _build_prompt(known: dict, unset_field_names: list[str], history: Optional[dict] = None) -> str:
     return f"""You are estimating conceptual-stage building design parameters for an
 Indian construction project, to feed an embodied carbon calculator.
 
 Known project details:
 {json.dumps(known, indent=2, default=str)}
-
+{_company_history_section(history)}
 Typical Indian RCC-framed construction ranges, to guide realistic estimates:
 - Steel reinforcement ratio: 50-70 kg/sqm for low-rise (under 5 floors),
   70-100 kg/sqm for mid-rise (5-15 floors), 100-130 kg/sqm for high-rise
@@ -245,7 +289,8 @@ def fill_missing_fields(project: ProjectSchema) -> ProjectSchema:
     if not unset:
         return project
 
-    prompt = _build_prompt(_known_fields_summary(project), unset)
+    history = company_history.historical_ranges(project.company_id)
+    prompt = _build_prompt(_known_fields_summary(project), unset, history=history)
     try:
         estimates = chat_json(prompt)
         estimates = _clamp_numeric_estimates(estimates)

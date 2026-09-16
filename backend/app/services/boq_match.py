@@ -5,6 +5,19 @@ cost_estimation.py to use, alongside the existing carbon-relevant ratios.
 
 Goes through app.services.reference_store rather than touching
 reference_stats.json or boq_cache.py directly.
+
+Workstream 04: matches against project.company_id's own reference
+projects only, never another company's -- see reference_store.py's
+docstring.
+
+Workstream 06: reference_store.find_candidates() now ranks by GFA
+closeness when given the project's own target GFA, replacing the old
+"v1: first match wins" behavior (whichever reference happened to be
+first in an arbitrary list) with a genuine nearest-size match -- the
+gap reference_store.py's own prior docstring already flagged as the
+intended next step. This module's only change is passing its own
+project's gfa through as target_gfa_sqm; the "take candidates[0]" line
+below is unchanged, but what candidates[0] now MEANS has changed.
 """
 
 from __future__ import annotations
@@ -21,16 +34,19 @@ def match_boq_defaults(project: ProjectSchema) -> ProjectSchema:
     system_type = project.mandatory.structural_system_type.value
     system_type_str = system_type.value if system_type else None
 
-    candidates = reference_store.find_candidates(structural_system_type=system_type_str)
+    candidates = reference_store.find_candidates(
+        structural_system_type=system_type_str, target_gfa_sqm=gfa, company_id=project.company_id
+    )
     if not candidates:
         return project
 
-    # v1: first match wins -- same limitation as before, now over a
-    # growable candidate list instead of a hardcoded pair of projects.
+    # Workstream 06: candidates are now ranked by GFA closeness (see
+    # find_candidates), so this is a genuine nearest-size match, not an
+    # arbitrary first-in-list pick.
     selected = candidates[0]
     slug = selected["slug"]
     ref_gfa = selected["gfa_sqm"]
-    extraction = boq_cache.load_extraction(slug)
+    extraction = boq_cache.load_extraction(slug, company_id=project.company_id)
     materials = extraction.get("materials", {}) if extraction else {}
 
     derived = project.__dict__.setdefault("_derived", {})

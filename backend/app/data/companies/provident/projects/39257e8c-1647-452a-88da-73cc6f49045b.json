@@ -1,5 +1,5 @@
 {
-  "project_id": "e584d325-8347-4397-a4b9-f9b861220909",
+  "project_id": "39257e8c-1647-452a-88da-73cc6f49045b",
   "mandatory": {
     "gfa_sqm": {
       "value": 50000.0,
@@ -24,9 +24,9 @@
       "confidence": 0.4
     },
     "num_floors": {
-      "value": 40,
-      "source": "llm-estimated",
-      "confidence": 0.4
+      "value": 16,
+      "source": "user-entered",
+      "confidence": 1.0
     },
     "has_basement": {
       "value": true,
@@ -76,7 +76,7 @@
       "confidence": 0.4
     },
     "facade_type": {
-      "value": "cladding",
+      "value": "concrete",
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -91,7 +91,7 @@
       "confidence": 0.4
     },
     "green_cert_target": {
-      "value": "LEED_Gold",
+      "value": "IGBC_Green",
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -101,5 +101,6 @@
       "confidence": 0.4
     }
   },
-  "_derived": {}
+  "_derived": {},
+  "company_id": "provident"
 }

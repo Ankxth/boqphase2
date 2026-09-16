@@ -1,0 +1,42 @@
+{
+  "n_line_items_parsed": 4372,
+  "n_line_items_computed": 1963,
+  "total_gwp_kg_co2e": 42619866.25585191,
+  "total_gwp_tonnes_co2e": 42619.866255851906,
+  "gwp_per_sqm": 256.7106448508026,
+  "parse_checksum_ok": true,
+  "by_category": [
+    {
+      "category": "concrete",
+      "gwp_kg_co2e": 20621252.099958207,
+      "line_item_count": 1344
+    },
+    {
+      "category": "reinforcement_steel",
+      "gwp_kg_co2e": 20234554.189376626,
+      "line_item_count": 9
+    },
+    {
+      "category": "aluminium",
+      "gwp_kg_co2e": 987156.5576609299,
+      "line_item_count": 11
+    },
+    {
+      "category": "structural_steel",
+      "gwp_kg_co2e": 764946.0117775557,
+      "line_item_count": 593
+    },
+    {
+      "category": "glass",
+      "gwp_kg_co2e": 11957.397078588187,
+      "line_item_count": 6
+    }
+  ],
+  "_meta": {
+    "pipeline": "wo_carbon",
+    "source_path": "app/data/work_orders/Provident Botanico_WO_SICL.pdf",
+    "generated_at": "2026-09-15T12:14:33.502214+00:00",
+    "verified_by": "claude_sandbox_run",
+    "changelog": "Workstream 01: unified emission-factor source"
+  }
+}

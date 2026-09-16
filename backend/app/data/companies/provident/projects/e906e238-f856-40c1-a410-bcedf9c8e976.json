@@ -1,5 +1,5 @@
 {
-  "project_id": "57c7edda-be49-444f-96da-950baf7844e0",
+  "project_id": "e906e238-f856-40c1-a410-bcedf9c8e976",
   "mandatory": {
     "gfa_sqm": {
       "value": 50000.0,
@@ -19,12 +19,12 @@
   },
   "tier2": {
     "typology": {
-      "value": "residential",
+      "value": "mixed_use",
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "num_floors": {
-      "value": 50,
+      "value": 40,
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -71,27 +71,27 @@
       "confidence": 0.4
     },
     "steel_reinforcement_ratio_kg_per_sqm": {
-      "value": 110.0,
+      "value": 115.0,
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "facade_type": {
-      "value": "cladding",
+      "value": "curtain_wall",
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "glazing_pct": {
-      "value": 20.0,
+      "value": 25.0,
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "mep_complexity": {
-      "value": "standard",
-      "source": "llm-estimated",
-      "confidence": 0.4
+      "value": null,
+      "source": "unset",
+      "confidence": 0.0
     },
     "green_cert_target": {
-      "value": "IGBC_Gold",
+      "value": "LEED_Gold",
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -101,5 +101,6 @@
       "confidence": 0.4
     }
   },
-  "_derived": {}
+  "_derived": {},
+  "company_id": "provident"
 }

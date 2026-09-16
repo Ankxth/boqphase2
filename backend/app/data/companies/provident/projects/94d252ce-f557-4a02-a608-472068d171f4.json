@@ -1,18 +1,18 @@
 {
-  "project_id": "f82b62be-74e4-4790-8f3a-5d504d464b95",
+  "project_id": "94d252ce-f557-4a02-a608-472068d171f4",
   "mandatory": {
     "gfa_sqm": {
-      "value": 123458.0,
+      "value": 50000.0,
       "source": "user-entered",
       "confidence": 1.0
     },
     "location": {
-      "value": "bangalore",
+      "value": "Bangalore",
       "source": "user-entered",
       "confidence": 1.0
     },
     "structural_system_type": {
-      "value": "load_bearing_masonry",
+      "value": "rcc_frame",
       "source": "user-entered",
       "confidence": 1.0
     }
@@ -20,33 +20,33 @@
   "tier2": {
     "typology": {
       "value": "residential",
-      "source": "llm-estimated",
-      "confidence": 0.4
+      "source": "user-entered",
+      "confidence": 1.0
     },
     "num_floors": {
-      "value": 60,
-      "source": "llm-estimated",
-      "confidence": 0.4
+      "value": 14,
+      "source": "user-entered",
+      "confidence": 1.0
     },
     "has_basement": {
       "value": true,
-      "source": "llm-estimated",
-      "confidence": 0.4
+      "source": "user-entered",
+      "confidence": 1.0
     },
     "basement_count": {
-      "value": 2,
+      "value": 1,
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "foundation_type": {
-      "value": "pile",
-      "source": "llm-estimated",
-      "confidence": 0.4
+      "value": "raft",
+      "source": "user-entered",
+      "confidence": 1.0
     },
     "finish_spec_level": {
       "value": "standard",
-      "source": "llm-estimated",
-      "confidence": 0.4
+      "source": "user-entered",
+      "confidence": 1.0
     },
     "parking_type": {
       "value": "underground",
@@ -61,7 +61,7 @@
   },
   "tier3": {
     "concrete_grade_mix": {
-      "value": "M20",
+      "value": "M30",
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -71,17 +71,17 @@
       "confidence": 0.4
     },
     "steel_reinforcement_ratio_kg_per_sqm": {
-      "value": 60.0,
-      "source": "llm-estimated",
-      "confidence": 0.4
+      "value": 58.33,
+      "source": "boq-matched",
+      "confidence": 0.6
     },
     "facade_type": {
-      "value": "brick_vitreous",
+      "value": "brick",
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "glazing_pct": {
-      "value": 10.0,
+      "value": 12.0,
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -91,7 +91,7 @@
       "confidence": 0.4
     },
     "green_cert_target": {
-      "value": "LEED_Gold",
+      "value": "IGBC_Green",
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -101,5 +101,13 @@
       "confidence": 0.4
     }
   },
-  "_derived": {}
+  "_derived": {
+    "steel_cost_per_kg": 68.49563032367973,
+    "steel_cost_source": "botanico",
+    "concrete_vol_per_sqm": 0.4665447419265804,
+    "matched_reference": "botanico",
+    "concrete_cost_per_m3": 7533.158053912114,
+    "concrete_cost_source": "botanico"
+  },
+  "company_id": "provident"
 }

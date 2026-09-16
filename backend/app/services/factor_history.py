@@ -1,0 +1,134 @@
+"""Workstream 09: the versioned history behind app/data/ice_db/
+emission_factors.json -- Foundation Plan WS05's second half ("a past
+report stays reproducible and explainable after factors are later
+updated").
+
+The relationship between this file's data and emission_factors.json
+flipped with this workstream: app/data/ice_db/factor_history.json (loaded
+here) is now the hand-edited source of truth, and emission_factors.json
+is a GENERATED SNAPSHOT of whichever history entry is currently valid per
+category -- see scripts/generate_emission_factors_snapshot.py, which
+writes it, and scripts/update_emission_factor.py, which is the supported
+way to record a new value (never hand-edit emission_factors.json
+directly anymore; it will just be overwritten the next time the snapshot
+script runs).
+
+Deliberately does NOT cover concrete (rcc/pcc) or reinforcement steel's
+per-kg factor -- those stay in app/data/ice_db/ice_db_factors.json's
+ifc_india section (cement-type/grade-keyed, a genuinely different schema
+from this file's flat per-category entries) and are out of scope for this
+workstream. See factor_history.json's own "_meta" for the same note.
+
+Nothing in either calculation engine (boq_carbon/engine.py,
+wo_carbon/wo_carbon_engine.py) changes because of this module -- they
+keep reading app/services/emission_factors.py's get_factor() /
+get_ef_kgco2e_per_kg(), which keeps reading the generated snapshot file
+exactly as before. This module is purely additive: a way to inspect how a
+category's factor has changed over time, and to reproduce what the
+snapshot would have looked like on a past date, for explaining an old
+report -- not a new input to today's calculations.
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import date, datetime
+from pathlib import Path
+from typing import Optional
+
+from pydantic import BaseModel
+
+HISTORY_PATH = Path(__file__).resolve().parent.parent / "data" / "ice_db" / "factor_history.json"
+
+
+class FactorHistoryEntry(BaseModel):
+    category: str
+    valid_from: str  # ISO date, e.g. "2026-09-01"
+    valid_to: Optional[str] = None  # None means "currently valid"
+    changelog_note: str
+    value: dict  # the exact payload emission_factors.json[category] carries when this entry is current
+
+
+def load_history() -> dict:
+    with open(HISTORY_PATH, "r") as f:
+        return json.load(f)
+
+
+def list_categories() -> list[str]:
+    return sorted(load_history()["categories"].keys())
+
+
+def get_history(category: str) -> list[FactorHistoryEntry]:
+    """Every recorded entry for `category`, oldest first. Empty list (not
+    an error) for a category with no history at all -- this module is
+    read-only inspection, and "nothing recorded" is a valid, honest
+    answer rather than something to raise on.
+    """
+    raw = load_history()["categories"].get(category, [])
+    return [FactorHistoryEntry(category=category, **entry) for entry in raw]
+
+
+def _parse(d: str) -> date:
+    return datetime.strptime(d, "%Y-%m-%d").date()
+
+
+def get_factor_as_of(category: str, as_of: Optional[str] = None) -> Optional[FactorHistoryEntry]:
+    """The entry that was in effect for `category` on `as_of` (an ISO
+    date string), or the currently-valid entry when as_of is None. Returns
+    None if the category has no history at all, or none yet valid_from
+    that date -- never raises, since "not sourced yet as of that date" is
+    a real, answerable state, not an error.
+    """
+    entries = get_history(category)
+    if not entries:
+        return None
+
+    if as_of is None:
+        for entry in entries:
+            if entry.valid_to is None:
+                return entry
+        return None  # every entry has since been superseded and nothing is currently valid -- a real, if unusual, state
+
+    target = _parse(as_of)
+    for entry in entries:
+        start = _parse(entry.valid_from)
+        end = _parse(entry.valid_to) if entry.valid_to else None
+        if start <= target and (end is None or target < end):
+            return entry
+    return None
+
+
+def generate_snapshot(as_of: Optional[str] = None) -> dict:
+    """Rebuilds the exact dict shape app/data/ice_db/emission_factors.json
+    carries (per-category payload, unwrapped from the history envelope),
+    as of `as_of` (or "now" -- meaning "whatever is currently valid" --
+    when as_of is None). This is what
+    scripts/generate_emission_factors_snapshot.py writes to disk; exposed
+    here too so a caller (or a future API endpoint) can get the same
+    snapshot in memory without shelling out to the script.
+    """
+    categories = list_categories()
+    snapshot: dict = {}
+    missing: list[str] = []
+    for cat in categories:
+        entry = get_factor_as_of(cat, as_of=as_of)
+        if entry is None:
+            missing.append(cat)
+            continue
+        snapshot[cat] = entry.value
+    snapshot["_status"] = (
+        "GENERATED by scripts/generate_emission_factors_snapshot.py from "
+        "app/data/ice_db/factor_history.json -- do not hand-edit this file, "
+        "your changes will be silently overwritten the next time the "
+        "snapshot is regenerated. See factor_history.json and "
+        "app/services/factor_history.py for the real source of truth and "
+        "scripts/update_emission_factor.py for how to record a new value."
+    )
+    snapshot["_snapshot_as_of"] = as_of or "current"
+    if missing:
+        # Never silently drop a category -- surfaced in the snapshot
+        # itself so it's visible to anyone reading the generated file,
+        # not just to someone who happens to check this function's
+        # return value in code.
+        snapshot["_missing_as_of_this_date"] = missing
+    return snapshot

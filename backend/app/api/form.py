@@ -38,7 +38,7 @@ from app.schemas.project_schema import (
     Tier3Fields,
     Typology,
 )
-from app.services import project_store
+from app.services import company_store, project_store
 from app.services.boq_match import match_boq_defaults
 from app.services.llm_fallback import fill_missing_fields
 
@@ -49,6 +49,11 @@ class FormSubmission(BaseModel):
     """Raw shape the frontend's TieredForm posts. Every field optional --
     the user may submit mandatory fields only, or go all the way to tier 3.
     """
+
+    # Workstream 04: which company this project belongs to. Omitted ->
+    # company_store.DEFAULT_COMPANY_ID, so a frontend that doesn't know
+    # about companies yet keeps working exactly as before.
+    company_id: Optional[str] = None
 
     # mandatory
     gfa_sqm: Optional[float] = None
@@ -85,6 +90,7 @@ def _user_field(value) -> FieldValue:
 def build_project_schema(submission: FormSubmission, project_id: Optional[str] = None) -> ProjectSchema:
     return ProjectSchema(
         project_id=project_id or str(uuid.uuid4()),
+        company_id=submission.company_id or company_store.DEFAULT_COMPANY_ID,
         mandatory=MandatoryFields(
             gfa_sqm=_user_field(submission.gfa_sqm),
             location=_user_field(submission.location),
@@ -127,15 +133,20 @@ def submit_form(submission: FormSubmission) -> ProjectSchema:
 
 
 @router.get("/form/{project_id}", response_model=ProjectSchema)
-def get_project(project_id: str) -> ProjectSchema:
-    project = project_store.load_project(project_id)
+def get_project(project_id: str, company_id: str = company_store.DEFAULT_COMPANY_ID) -> ProjectSchema:
+    # company_id here is only for LOOKUP -- which company's directory to
+    # read from. The loaded project's own company_id field (persisted on
+    # every save) is the actual source of truth for every downstream use.
+    project = project_store.load_project(project_id, company_id=company_id)
     if project is None:
         raise HTTPException(status_code=404, detail=f"No project found with id '{project_id}'")
     return project
 
 
 @router.patch("/form/{project_id}", response_model=ProjectSchema)
-def edit_project(project_id: str, edits: FormSubmission) -> ProjectSchema:
+def edit_project(
+    project_id: str, edits: FormSubmission, company_id: str = company_store.DEFAULT_COMPANY_ID
+) -> ProjectSchema:
     """Applies review-step corrections. Any field included in the
     request body OVERWRITES the existing field unconditionally, tagged
     source="user-entered", confidence=1.0 -- a user's explicit correction
@@ -143,11 +154,12 @@ def edit_project(project_id: str, edits: FormSubmission) -> ProjectSchema:
     even an earlier user-entered value). Fields omitted from the request
     body are left untouched, not cleared.
     """
-    project = project_store.load_project(project_id)
+    project = project_store.load_project(project_id, company_id=company_id)
     if project is None:
         raise HTTPException(status_code=404, detail=f"No project found with id '{project_id}'")
 
     edits_dict = edits.model_dump(exclude_unset=True)
+    edits_dict.pop("company_id", None)  # routing, not an editable tier field -- see get_project's own note
     for field_name, value in edits_dict.items():
         if value is None:
             continue

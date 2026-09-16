@@ -1,0 +1,73 @@
+{
+  "n_lines_total": 2077,
+  "n_lines_classified": 1215,
+  "n_lines_computed": 718,
+  "total_gwp_kg_co2e": 48462916.16898642,
+  "total_gwp_tonnes_co2e": 48462.91616898642,
+  "gwp_per_sqm": 291.9048686452105,
+  "by_category": [
+    {
+      "category": "reinforcement_steel",
+      "gwp_kg_co2e": 25805467.66022371,
+      "line_item_count": 2
+    },
+    {
+      "category": "rcc",
+      "gwp_kg_co2e": 15281031.12305333,
+      "line_item_count": 186
+    },
+    {
+      "category": "plaster_cement",
+      "gwp_kg_co2e": 2255219.1531000016,
+      "line_item_count": 103
+    },
+    {
+      "category": "plaster_gypsum",
+      "gwp_kg_co2e": 1660148.0280000004,
+      "line_item_count": 61
+    },
+    {
+      "category": "aluminium",
+      "gwp_kg_co2e": 1080000.7213824587,
+      "line_item_count": 2
+    },
+    {
+      "category": "tile_ceramic",
+      "gwp_kg_co2e": 688676.8946399991,
+      "line_item_count": 127
+    },
+    {
+      "category": "pcc",
+      "gwp_kg_co2e": 613155.8716396674,
+      "line_item_count": 5
+    },
+    {
+      "category": "structural_steel",
+      "gwp_kg_co2e": 553704.3352870859,
+      "line_item_count": 81
+    },
+    {
+      "category": "blockwork_dense",
+      "gwp_kg_co2e": 323011.7436000002,
+      "line_item_count": 53
+    },
+    {
+      "category": "paint",
+      "gwp_kg_co2e": 201490.1537999999,
+      "line_item_count": 94
+    },
+    {
+      "category": "glass",
+      "gwp_kg_co2e": 1010.484260162382,
+      "line_item_count": 4
+    }
+  ],
+  "_sheet_used": "Part-A & B_BOQ ",
+  "_meta": {
+    "pipeline": "boq_carbon",
+    "source_path": "app/data/reference_boqs/Botanico_BOQ.xlsx",
+    "generated_at": "2026-09-16T07:55:11.264393+00:00",
+    "verified_by": "claude_sandbox_run",
+    "changelog": "Workstream 07: four classifier splits (tile/natural_stone, aluminium/upvc_window_door_frame, blockwork_aac/blockwork_dense, plaster_cement/plaster_gypsum) replace the old blended defaults -- expected, deliberate reduction from previously-wrong-but-computed uPVC-as-aluminium and generic-block/plaster lines now either correctly bucketed or honestly excluded (natural_stone/upvc area-priced lines have no sourced areal-mass assumption yet, matching wo_carbon's own master-data gap). See classifier.py's WS07 docstring."
+  }
+}

@@ -140,6 +140,19 @@ class Tier3Fields(BaseModel):
 class ProjectSchema(BaseModel):
     """The single unified object passed between every pipeline stage."""
     project_id: str
+    # Workstream 04: which company this project belongs to -- decides
+    # where it's persisted (app/services/company_store.py) and which
+    # company's reference projects boq_match.py is allowed to learn
+    # from. Defaults to "provident" (kept as a literal here rather than
+    # importing app.services.company_store.DEFAULT_COMPANY_ID, so this
+    # schema module doesn't take a dependency on the services layer --
+    # the two must be kept in sync, and company_store.py's own docstring
+    # says so). A project loaded from a pre-Workstream-04 JSON file
+    # (which has no company_id key at all) picks up this same default
+    # automatically, which is exactly the intended migration behavior:
+    # every project that existed before this field did belongs to
+    # Provident.
+    company_id: str = "provident"
     mandatory: MandatoryFields = MandatoryFields()
     tier2: Tier2Fields = Tier2Fields()
     tier3: Tier3Fields = Tier3Fields()

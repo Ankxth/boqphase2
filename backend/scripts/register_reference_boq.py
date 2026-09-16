@@ -29,7 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.services import boq_cache, reference_store
+from app.services import boq_cache, company_store, reference_store
 from app.services.boq_extractor import extract_boq
 
 
@@ -47,6 +47,10 @@ def main():
     parser.add_argument("--no-llm", action="store_true", help="Deterministic extraction only")
     parser.add_argument(
         "--metadata-only", action="store_true", help="Update metadata without re-extracting"
+    )
+    parser.add_argument(
+        "--company", default=company_store.DEFAULT_COMPANY_ID,
+        help=f"Company to register this reference project under (Workstream 04). Default: {company_store.DEFAULT_COMPANY_ID!r}",
     )
     args = parser.parse_args()
 
@@ -78,11 +82,11 @@ def main():
                 )
         print(f"  unclassified rows: {extraction['unclassified_row_count']}")
 
-        boq_cache.save_extraction(args.slug, extraction)
-        print(f"\nExtraction saved to cache for '{args.slug}'")
+        boq_cache.save_extraction(args.slug, extraction, company_id=args.company)
+        print(f"\nExtraction saved to cache for '{args.slug}' (company: {args.company})")
 
     if args.clear_gfa:
-        entry = reference_store.clear_gfa(args.slug)
+        entry = reference_store.clear_gfa(args.slug, company_id=args.company)
         if entry is None:
             print(f"No metadata entry exists yet for '{args.slug}' -- nothing to clear.")
             return
@@ -94,10 +98,11 @@ def main():
             typology=args.typology,
             gfa_sqm=args.gfa,
             priced_year=args.priced_year,
+            company_id=args.company,
         )
         print(f"\nMetadata for '{args.slug}': {entry}")
 
-    ref = reference_store.get_reference(args.slug)
+    ref = reference_store.get_reference(args.slug, company_id=args.company)
     if ref and ref["metadata"].get("gfa_sqm") is not None and ref["extraction"] is not None:
         print(f"'{args.slug}' is now usable for BOQ matching (GFA + extraction both present).")
     else:

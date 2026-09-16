@@ -7,3 +7,6 @@ pandas
 ollama
 groq
 python-multipart
+pytest
+pdfplumber
+scikit-learn

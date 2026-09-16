@@ -1,9 +1,14 @@
 """Phase 2 calculation engine: raw BOQ file -> embodied carbon (GWP100,
 kg CO2e), using the format-agnostic parser (parser.py), the keyword
-classifier (classifier.py), and two factor sources -- app.services.ice_factors
-/ cea_adjustment (concrete + reinforcement steel, the same real
-CEA-adjusted IFC data Phase 1 uses) and extra_factors.py (every other
-category, placeholder-quality, see that module's docstring).
+classifier (classifier.py), and the single canonical factor source
+(Workstream 01) -- app.services.ice_factors/cea_adjustment for concrete +
+reinforcement steel (cement-type/grade-dependent, the same real
+CEA-adjusted IFC data Phase 1 uses), and app.services.emission_factors
+for every other category. Both boq_carbon and wo_carbon read from this
+same pair of modules now; neither engine keeps its own copy of a number.
+See emission_factors.py's module docstring for what changed in this
+workstream and why (extra_factors.py / boq_carbon_extra_factors.json are
+now deprecated, unread by this engine, kept only as a historical record).
 
 Floor area handling -- read this before trusting a kgCO2e/m2 figure:
 
@@ -41,23 +46,28 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel
 
+from app.services import coverage as coverage_service
 from app.services.boq_carbon.classifier import (
     CATEGORY_ALUMINIUM,
-    CATEGORY_BLOCK,
+    CATEGORY_BLOCKWORK_AAC,
+    CATEGORY_BLOCKWORK_DENSE,
     CATEGORY_BRICK,
     CATEGORY_GLASS,
+    CATEGORY_NATURAL_STONE,
     CATEGORY_PAINT,
     CATEGORY_PCC,
-    CATEGORY_PLASTER,
+    CATEGORY_PLASTER_CEMENT,
+    CATEGORY_PLASTER_GYPSUM,
     CATEGORY_RCC,
     CATEGORY_STEEL_REBAR,
     CATEGORY_STEEL_SECTION,
-    CATEGORY_TILE,
+    CATEGORY_TILE_CERAMIC,
     CATEGORY_TIMBER,
+    CATEGORY_UPVC,
     classify_material,
 )
-from app.services.boq_carbon.extra_factors import get_factor
 from app.services.boq_carbon.parser import extract_billable_items
+from app.services.emission_factors import get_factor
 from app.services.ice_factors import get_concrete_factor_per_m3, get_steel_rebar_factor_per_kg
 
 SQM_TO_SQFT = 10.7639
@@ -79,8 +89,6 @@ _LINEAR_UNITS = re.compile(r"^(rmt|rm|rft|r\.?m\.?t?)$", re.I)
 # conversion path is required for timber to contribute anything, not
 # optional the way it was for the mass/area/volume categories.
 _COUNT_UNITS = re.compile(r"^(nos\.?|no\.?|each|ea)$", re.I)
-
-CONCRETE_DENSITY_KG_PER_M3 = 2400.0  # matches ice_db_factors.json's own default_density_kg_per_m3
 
 # Assumed skirting/coping height for tile items priced per running metre
 # rather than per sqm. 100mm is stated explicitly in the one real example
@@ -128,6 +136,20 @@ class LineItemResult(BaseModel):
     grade: Optional[str] = None
     gwp_kg_co2e: Optional[float]
     basis_note: str  # e.g. "12.3 m3 x 227.1 kgCO2e/m3 (PPC, M25)", or the reason it wasn't computed
+    # Workstream 07: the BOQ's own Rate/Amount columns for this row, when
+    # the sheet has them (parser.py's extract_billable_items already
+    # parses both -- this just surfaces them on the result). Purely
+    # additive; None for any BOQ/row with no priced Rate/Amount column.
+    # Feed the new `coverage` field's value-weighted coverage check below
+    # -- rate is kept alongside amount (not just amount alone) because a
+    # real reference BOQ was found, while building this, whose Amount
+    # column is present but zero-filled for every row despite Rate being
+    # real throughout (confirmed: wherever both amount and rate*qty are
+    # present elsewhere in the same file, amount == rate*qty exactly) --
+    # coverage falls back to rate*qty for exactly that case, see
+    # calculate_from_boq's coverage-row builder.
+    rate: Optional[float] = None
+    amount: Optional[float] = None
 
 
 class CategoryTotal(BaseModel):
@@ -152,24 +174,56 @@ class BoqCarbonResult(BaseModel):
     gwp_per_sqm: Optional[float] = None
     gwp_per_sqft: Optional[float] = None
     line_items: list[LineItemResult] = []
+    # Workstream 06: set by app/api/boq_carbon.py, not by this engine
+    # itself (calculate_from_boq has no company_id/reference-registration
+    # concept -- it's a pure file-in, numbers-out function). Left None
+    # for any caller that doesn't go through the auto-registration path,
+    # so this is purely additive to every existing response shape.
+    registered_as_reference: Optional[bool] = None
+    reference_slug: Optional[str] = None
+    registration_note: Optional[str] = None
+    # Workstream 07: value-weighted coverage summary (computed vs. total
+    # Amount, broken down by a fixed six-reason taxonomy) plus the same
+    # figures restricted to the ~5 highest-impact material categories --
+    # see app.services.coverage's module docstring. Optional only for
+    # symmetry with the other Optional result fields; always set by
+    # calculate_from_boq() itself (unlike registered_as_reference, this
+    # isn't conditional on the caller opting into anything).
+    coverage: Optional[coverage_service.Coverage] = None
     scope_note: str = (
         "Covers rcc, pcc, reinforcement_steel, structural_steel, brickwork, "
-        "blockwork, plaster, tile, paint, timber, and aluminium_glazing/glass "
-        "line items that the classifier recognized AND whose unit this engine "
-        "knows how to convert. MEP, sanitary fittings, waterproofing "
-        "membranes, and any unrecognized line item are NOT included -- see "
-        "n_lines_total vs. n_lines_computed for the coverage gap."
+        "blockwork_aac/blockwork_dense, plaster_cement/plaster_gypsum, "
+        "tile_ceramic/natural_stone, paint, timber, and "
+        "aluminium/upvc_window_door_frame/glass line items that the "
+        "classifier recognized AND whose unit this engine knows how to "
+        "convert. MEP, sanitary fittings, waterproofing membranes, and any "
+        "unrecognized line item are NOT included -- see the `coverage` field "
+        "for exactly how much value that leaves out and why."
     )
     factor_disclaimer: str = (
-        "Concrete (rcc/pcc) and reinforcement steel use the same real, "
-        "India-specific, CEA-adjusted IFC factors as the Phase 1 conceptual "
-        "estimator (app.services.ice_factors), now grade-differentiated using "
+        "As of Workstream 01 (one emission-factor source), every category "
+        "this engine computes reads from exactly one place -- the same place "
+        "the Work Order pipeline (wo_carbon) reads from. Concrete (rcc/pcc) "
+        "and reinforcement steel use the real, India-specific, CEA-adjusted "
+        "IFC factors (app.services.ice_factors), grade-differentiated using "
         "ICE v4.1's CEM-I grade curve as a scaling ratio on top of IFC's "
-        "cement-type anchor. Every other category (structural steel sections, "
-        "brick, block, plaster, tile, paint, aluminium, glass) uses ROUGH "
-        "PLACEHOLDER factors -- see extra_factors.py / "
-        "boq_carbon_extra_factors.json -- not yet verified line-by-line "
-        "against a primary source the way concrete/steel were."
+        "cement-type anchor. Structural steel, aluminium, glass, brickwork, "
+        "blockwork, plaster, and tile are now IFC-primary-source and "
+        "CEA-adjusted where applicable (app.services.emission_factors) -- "
+        "upgraded from this engine's own earlier un-adjusted placeholder "
+        "copies; see that module's docstring and app/data/ice_db/"
+        "emission_factors.json's per-category '_reconciliation' notes for "
+        "exactly what changed. Paint remains an ICE-UK-proxy placeholder on "
+        "both pipelines (no India-specific source identified yet). As of "
+        "Workstream 07, plaster/tile/blockwork/aluminium-vs-uPVC each "
+        "resolve to their real, distinct sub-category (plaster_cement vs. "
+        "plaster_gypsum, tile_ceramic vs. natural_stone, blockwork_aac vs. "
+        "blockwork_dense, aluminium vs. upvc_window_door_frame) instead of "
+        "one blended default -- the classifier-split gap this disclaimer "
+        "used to flag as deferred is closed; see classifier.py's own "
+        "module docstring for the real factor gaps each split corrects "
+        "(2.2x-7.4x) and the Workstream 01 reconciliation log for the prior "
+        "state."
     )
 
 
@@ -200,40 +254,68 @@ def compute_line_gwp(
 
     if category == CATEGORY_STEEL_SECTION:
         entry = get_factor("structural_steel")
-        per_kg = entry["gwp_kgco2e_per_kg"]
+        per_kg = entry["ef_kgco2e_per_kg"]
+        tier = entry["evidence_tier"]
         if _MASS_KG_UNITS.match(uom):
-            return qty * per_kg, f"{qty:g} kg x {per_kg} kgCO2e/kg (placeholder)"
+            return qty * per_kg, f"{qty:g} kg x {per_kg} kgCO2e/kg ({tier}, CEA-adjusted)"
         if _MASS_MT_UNITS.match(uom):
-            return qty * 1000.0 * per_kg, f"{qty:g} MT x 1000 x {per_kg} kgCO2e/kg (placeholder)"
+            return qty * 1000.0 * per_kg, f"{qty:g} MT x 1000 x {per_kg} kgCO2e/kg ({tier}, CEA-adjusted)"
         return None, f"structural_steel line with non-mass unit '{uom}'"
 
-    if category in (CATEGORY_BRICK, CATEGORY_BLOCK):
-        entry = get_factor("aac_block" if category == CATEGORY_BLOCK else "brick_clay")
-        per_kg = entry["gwp_kgco2e_per_kg"]
+    if category in (CATEGORY_BRICK, CATEGORY_BLOCKWORK_AAC, CATEGORY_BLOCKWORK_DENSE):
+        # Workstream 07: category is now the exact canonical key
+        # (blockwork_aac vs blockwork_dense resolved by classify_material
+        # itself) rather than one classifier-wide AAC default -- see
+        # classifier.py's WS07 section.
+        entry = get_factor(category if category != CATEGORY_BRICK else "brickwork")
+        per_kg = entry["ef_kgco2e_per_kg"]
         density = entry["density_kg_per_m3"]
+        tier = entry["evidence_tier"]
         if _VOL_UNITS.match(uom):
-            return qty * density * per_kg, f"{qty:g} m3 x {density} kg/m3 x {per_kg} kgCO2e/kg (placeholder)"
+            return qty * density * per_kg, f"{qty:g} m3 x {density} kg/m3 x {per_kg} kgCO2e/kg ({tier})"
         if _AREA_UNITS.match(uom):
             assumed_thickness_m = 0.2  # standard Indian block/brick wall thickness assumption
             gwp = qty * assumed_thickness_m * density * per_kg
-            return gwp, f"{qty:g} m2 x {assumed_thickness_m}m assumed x {density} kg/m3 x {per_kg} kgCO2e/kg (placeholder)"
+            return gwp, f"{qty:g} m2 x {assumed_thickness_m}m assumed x {density} kg/m3 x {per_kg} kgCO2e/kg ({tier})"
         return None, f"{category} line with unhandled unit '{uom}'"
 
-    if category == CATEGORY_PLASTER:
-        entry = get_factor("cement_plaster")
-        per_kg, density, thickness = entry["gwp_kgco2e_per_kg"], entry["density_kg_per_m3"], entry["assumed_thickness_m"]
+    if category in (CATEGORY_PLASTER_CEMENT, CATEGORY_PLASTER_GYPSUM):
+        # Workstream 07: category is now the exact canonical key (cement
+        # vs gypsum resolved by classify_material itself) rather than one
+        # classifier-wide cement-based default -- see classifier.py's
+        # WS07 section. Both entries share the same density/thickness
+        # assumption, only the per-kg factor differs.
+        entry = get_factor(category)
+        per_kg, density, thickness = entry["ef_kgco2e_per_kg"], entry["density_kg_per_m3"], entry["assumed_thickness_m"]
+        tier = entry["evidence_tier"]
         if _AREA_UNITS.match(uom):
-            return qty * thickness * density * per_kg, f"{qty:g} m2 x {thickness}m x {density} kg/m3 x {per_kg} kgCO2e/kg (placeholder)"
+            return qty * thickness * density * per_kg, f"{qty:g} m2 x {thickness}m x {density} kg/m3 x {per_kg} kgCO2e/kg ({tier}, {category})"
         if _VOL_UNITS.match(uom):
-            return qty * density * per_kg, f"{qty:g} m3 x {density} kg/m3 x {per_kg} kgCO2e/kg (placeholder)"
-        return None, f"plaster line with unhandled unit '{uom}'"
+            return qty * density * per_kg, f"{qty:g} m3 x {density} kg/m3 x {per_kg} kgCO2e/kg ({tier}, {category})"
+        return None, f"{category} line with unhandled unit '{uom}'"
 
-    if category == CATEGORY_TILE:
-        entry = get_factor("ceramic_tile")
-        per_kg, areal_mass = entry["gwp_kgco2e_per_kg"], entry["areal_mass_kg_per_m2"]
-        if _AREA_UNITS.match(uom):
-            return qty * areal_mass * per_kg, f"{qty:g} m2 x {areal_mass} kg/m2 x {per_kg} kgCO2e/kg (placeholder)"
-        if _LINEAR_UNITS.match(uom):
+    if category in (CATEGORY_TILE_CERAMIC, CATEGORY_NATURAL_STONE):
+        # Workstream 07: granite/marble now resolve to natural_stone
+        # instead of being priced as ceramic tile -- see classifier.py's
+        # WS07 section (a 2.2x factor gap). natural_stone's canonical
+        # entry carries no areal_mass_kg_per_m2 (unlike tile_ceramic) --
+        # no sourced kg/m2 figure for stone slabs exists yet, so an area-
+        # or linear-priced natural_stone line is honestly excluded rather
+        # than reusing tile's areal-mass assumption for a different,
+        # denser material -- exactly the same gap wo_carbon's own master
+        # dataset already flags "NEEDS AREAL-MASS ASSUMPTION" for real
+        # granite-flooring Activity Codes (see that file for confirmation
+        # this isn't a new gap, just now visible on the boq_carbon side
+        # too).
+        entry = get_factor(category)
+        per_kg = entry["ef_kgco2e_per_kg"]
+        tier = entry["evidence_tier"]
+        areal_mass = entry.get("areal_mass_kg_per_m2")
+        if _MASS_KG_UNITS.match(uom):
+            return qty * per_kg, f"{qty:g} kg x {per_kg} kgCO2e/kg ({tier}, {category})"
+        if areal_mass is not None and _AREA_UNITS.match(uom):
+            return qty * areal_mass * per_kg, f"{qty:g} m2 x {areal_mass} kg/m2 x {per_kg} kgCO2e/kg ({tier}, {category})"
+        if areal_mass is not None and _LINEAR_UNITS.match(uom):
             # Skirting/coping priced per running metre -- convert to an
             # equivalent area using an assumed height, then price as area.
             # See ASSUMED_TILE_SKIRTING_HEIGHT_M's comment for the basis.
@@ -241,36 +323,64 @@ def compute_line_gwp(
             gwp = qty * h * areal_mass * per_kg
             return gwp, (
                 f"{qty:g} m (linear) x {h}m assumed height x {areal_mass} kg/m2 x "
-                f"{per_kg} kgCO2e/kg (placeholder, linear-to-area assumption)"
+                f"{per_kg} kgCO2e/kg ({tier}, {category}, linear-to-area assumption)"
             )
-        return None, f"tile line with unhandled unit '{uom}'"
+        if areal_mass is None and (_AREA_UNITS.match(uom) or _LINEAR_UNITS.match(uom)):
+            return None, (
+                f"natural_stone line with unhandled unit '{uom}' -- no documented areal-mass "
+                f"assumption for natural stone yet (unlike tile_ceramic, its canonical entry "
+                f"carries no areal_mass_kg_per_m2)"
+            )
+        return None, f"{category} line with unhandled unit '{uom}'"
 
     if category == CATEGORY_PAINT:
         entry = get_factor("paint")
-        per_kg, coverage = entry["gwp_kgco2e_per_kg"], entry["coverage_kg_per_m2"]
+        per_kg, paint_coverage = entry["ef_kgco2e_per_kg"], entry["coverage_kg_per_m2"]
         if _AREA_UNITS.match(uom):
-            return qty * coverage * per_kg, f"{qty:g} m2 x {coverage} kg/m2 x {per_kg} kgCO2e/kg (placeholder)"
+            return qty * paint_coverage * per_kg, f"{qty:g} m2 x {paint_coverage} kg/m2 x {per_kg} kgCO2e/kg (placeholder)"
         return None, f"paint line with unhandled unit '{uom}'"
 
-    if category == CATEGORY_ALUMINIUM:
-        entry = get_factor("aluminium")
-        per_kg, areal_mass = entry["gwp_kgco2e_per_kg"], entry["areal_mass_kg_per_m2"]
-        if _AREA_UNITS.match(uom):
-            return qty * areal_mass * per_kg, f"{qty:g} m2 x {areal_mass} kg/m2 x {per_kg} kgCO2e/kg (placeholder)"
+    if category in (CATEGORY_ALUMINIUM, CATEGORY_UPVC):
+        # Workstream 07: uPVC window/door/frame lines now resolve to
+        # upvc_window_door_frame instead of being priced as aluminium --
+        # see classifier.py's WS07 section (a 7.4x factor gap). Expected,
+        # disclosed consequence: upvc_window_door_frame's canonical entry
+        # only has a sourced mass-basis conversion (KG/KGS) -- exactly
+        # the same gap wo_carbon's own master dataset already flags
+        # "NEEDS REVIEW" for real UPVC Activity Codes priced in Sqm/Nos --
+        # so an area-priced uPVC line (the common real case, previously
+        # silently and wrongly computed as aluminium) is now honestly
+        # excluded rather than computed at all. Total computed GWP for a
+        # BOQ with real uPVC content is therefore expected to go DOWN
+        # after this fix, not up -- that's the correction working as
+        # intended, not a regression.
+        entry = get_factor(category)
+        per_kg = entry["ef_kgco2e_per_kg"]
+        tier = entry["evidence_tier"]
+        areal_mass = entry.get("areal_mass_kg_per_m2")
         if _MASS_KG_UNITS.match(uom):
-            return qty * per_kg, f"{qty:g} kg x {per_kg} kgCO2e/kg (placeholder)"
-        return None, f"aluminium_glazing line with unhandled unit '{uom}'"
+            return qty * per_kg, f"{qty:g} kg x {per_kg} kgCO2e/kg ({tier}, CEA-adjusted)"
+        if areal_mass is not None and _AREA_UNITS.match(uom):
+            return qty * areal_mass * per_kg, f"{qty:g} m2 x {areal_mass} kg/m2 x {per_kg} kgCO2e/kg ({tier}, CEA-adjusted)"
+        if areal_mass is None and _AREA_UNITS.match(uom):
+            return None, (
+                f"upvc_window_door_frame line with unhandled unit '{uom}' -- no documented "
+                f"areal-mass assumption for uPVC framing yet (unlike aluminium, its canonical "
+                f"entry carries no areal_mass_kg_per_m2)"
+            )
+        return None, f"{category} line with unhandled unit '{uom}'"
 
     if category == CATEGORY_GLASS:
         entry = get_factor("glass")
-        per_kg, areal_mass = entry["gwp_kgco2e_per_kg"], entry["areal_mass_kg_per_m2"]
+        per_kg, areal_mass = entry["ef_kgco2e_per_kg"], entry["areal_mass_kg_per_m2"]
+        tier = entry["evidence_tier"]
         if _AREA_UNITS.match(uom):
-            return qty * areal_mass * per_kg, f"{qty:g} m2 x {areal_mass} kg/m2 x {per_kg} kgCO2e/kg (placeholder)"
+            return qty * areal_mass * per_kg, f"{qty:g} m2 x {areal_mass} kg/m2 x {per_kg} kgCO2e/kg ({tier}, CEA-adjusted)"
         return None, f"glass line with unhandled unit '{uom}'"
 
     if category == CATEGORY_TIMBER:
-        entry = get_factor("timber")
-        per_kg = entry["gwp_kgco2e_per_kg"]
+        entry = get_factor("timber_wood")
+        per_kg = entry["ef_kgco2e_per_kg"]
         # Count units (Nos) first -- this is the ONLY unit real timber
         # lines were found priced in (see _COUNT_UNITS comment). Mass/
         # volume/area paths are kept as a fallback for BOQs that price
@@ -304,6 +414,29 @@ def compute_line_gwp(
 # private name to a shared one (see module docstring) once
 # substitution_engine.py needed to import it directly.
 _compute_line_gwp = compute_line_gwp
+
+# Workstream 07: the ~5 top-impact categories, expressed in boq_carbon's
+# own category vocabulary. app.services.coverage.TOP5_MATERIAL_CATEGORIES
+# uses "concrete" as one canonical entry; this classifier splits that into
+# CATEGORY_RCC/CATEGORY_PCC instead (a real, deliberate distinction --
+# plain/blinding concrete has a much lower carbon profile than structural
+# RCC, see classifier.py's own docstring) so both count as top5 here.
+_TOP5_CATEGORIES_BOQ = coverage_service.TOP5_MATERIAL_CATEGORIES | {CATEGORY_RCC, CATEGORY_PCC}
+
+
+def _classify_boq_exclusion_reason(li: LineItemResult) -> str:
+    """Buckets one excluded BOQ line item's basis_note into the fixed
+    six-reason taxonomy (app.services.coverage). boq_carbon has no
+    contributes-flag concept (unlike wo_carbon's curated master file), so
+    it never emits NOT_CONTRIBUTING/NEEDS_REVIEW -- every excluded line
+    here is either unclassified, missing a usable quantity/unit, or
+    classified with no computable unit-conversion formula.
+    """
+    if li.category is None or li.basis_note == "unclassified":
+        return coverage_service.REASON_UNCLASSIFIED
+    if li.basis_note in ("no quantity", "no unit"):
+        return coverage_service.REASON_NO_QUANTITY
+    return coverage_service.REASON_UNHANDLED_UNIT
 
 
 def calculate_from_boq(
@@ -346,6 +479,8 @@ def calculate_from_boq(
                 grade=cls.grade,
                 gwp_kg_co2e=gwp,
                 basis_note=note,
+                rate=item.rate,
+                amount=item.amount,
             )
         )
 
@@ -368,6 +503,29 @@ def calculate_from_boq(
     n_classified = sum(1 for r in line_results if r.category is not None)
     n_computed = sum(1 for r in line_results if r.gwp_kg_co2e is not None)
 
+    def _row_value(r: LineItemResult) -> float:
+        # Amount when it's real; otherwise rate*qty -- a real reference
+        # BOQ was found with Rate populated but Amount zero-filled
+        # throughout, confirmed elsewhere to satisfy amount == rate*qty
+        # exactly wherever both are present, so this isn't an invented
+        # number, just the same arithmetic the sheet's own Amount column
+        # should already reflect.
+        if r.amount:
+            return r.amount
+        if r.rate and r.qty:
+            return r.rate * r.qty
+        return 0.0
+
+    coverage_rows = [
+        {
+            "value": _row_value(r),
+            "computed": r.gwp_kg_co2e is not None,
+            "is_top5": r.category in _TOP5_CATEGORIES_BOQ,
+            "reason": None if r.gwp_kg_co2e is not None else _classify_boq_exclusion_reason(r),
+        }
+        for r in line_results
+    ]
+
     result = BoqCarbonResult(
         source_file=file_path.rsplit("/", 1)[-1].rsplit("\\", 1)[-1],
         sheet_name=sheet_name,
@@ -378,6 +536,7 @@ def calculate_from_boq(
         total_gwp_tonnes_co2e=total_gwp / 1000.0,
         by_category=by_category,
         line_items=line_results,
+        coverage=coverage_service.build_coverage(coverage_rows),
     )
 
     if floor_area_sqm and floor_area_basis:

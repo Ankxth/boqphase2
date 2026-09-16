@@ -1,5 +1,5 @@
 {
-  "project_id": "796ee870-6ed8-4459-a49a-b9514daaab01",
+  "project_id": "57c7edda-be49-444f-96da-950baf7844e0",
   "mandatory": {
     "gfa_sqm": {
       "value": 50000.0,
@@ -7,9 +7,9 @@
       "confidence": 1.0
     },
     "location": {
-      "value": null,
-      "source": "unset",
-      "confidence": 0.0
+      "value": "Bangalore",
+      "source": "user-entered",
+      "confidence": 1.0
     },
     "structural_system_type": {
       "value": "rcc_frame",
@@ -54,7 +54,7 @@
       "confidence": 0.4
     },
     "parking_area_sqm": {
-      "value": 5000.0,
+      "value": 1700.0,
       "source": "llm-estimated",
       "confidence": 0.4
     }
@@ -66,14 +66,14 @@
       "confidence": 0.4
     },
     "cement_type": {
-      "value": "OPC",
-      "source": "user-entered",
-      "confidence": 1.0
+      "value": "PPC",
+      "source": "llm-estimated",
+      "confidence": 0.4
     },
     "steel_reinforcement_ratio_kg_per_sqm": {
-      "value": 211.32,
-      "source": "own-boq-extracted",
-      "confidence": 0.9
+      "value": 110.0,
+      "source": "llm-estimated",
+      "confidence": 0.4
     },
     "facade_type": {
       "value": "cladding",
@@ -91,7 +91,7 @@
       "confidence": 0.4
     },
     "green_cert_target": {
-      "value": "LEED_Gold",
+      "value": "IGBC_Gold",
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -101,16 +101,6 @@
       "confidence": 0.4
     }
   },
-  "_derived": {
-    "steel_cost_per_kg": 68.49563032367973,
-    "steel_cost_source": "own_boq",
-    "concrete_vol_per_sqm": 1.690291600000001,
-    "matched_reference": "own_boq",
-    "concrete_cost_per_m3": 7533.158053912114,
-    "concrete_cost_source": "own_boq",
-    "own_boq_extraction_meta": {
-      "source_file": "tmpptt27fs0.xlsx",
-      "unclassified_row_count": 0
-    }
-  }
+  "_derived": {},
+  "company_id": "provident"
 }

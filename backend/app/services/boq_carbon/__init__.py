@@ -23,21 +23,21 @@ Modules:
                     only ~58% real accuracy even after reranking, and
                     carbon calculation doesn't need an exact code, only
                     material + grade + quantity.
-- extra_factors.py -- emission factors for the categories concrete+steel's
-                    existing ice_db_factors.json doesn't cover (brick,
-                    block, plaster, tile, paint, aluminium, glass). These
-                    are ROUGH PLACEHOLDER assumptions (see the module
-                    docstring), not yet verified line-by-line against IFC's
-                    full Table 14 or ICE's dedicated material-profile
-                    sheets the way concrete/steel were -- flagged clearly,
-                    not silently presented as equally solid.
+- extra_factors.py -- DEPRECATED as of Workstream 01 (one emission-factor
+                    source). Kept on disk only as a backward-compatible
+                    shim and a historical record of the original
+                    placeholder-quality numbers' full sourcing writeups.
+                    No longer read by engine.py -- see
+                    app.services.emission_factors instead.
 - engine.py     -- ties parser + classifier + factors together into one
                     calculate_from_boq() entry point. Reuses
                     app.services.ice_factors and app.services.cea_adjustment
-                    for concrete/steel (the same real, CEA-adjusted IFC
-                    data Phase 1 uses) rather than a second, competing
-                    factor table -- one source of truth for those two
-                    materials across both phases.
+                    for concrete/steel, and app.services.emission_factors
+                    for every other category -- the same single factor
+                    source app.services.wo_carbon.wo_carbon_engine reads
+                    too, as of Workstream 01. See
+                    docs/workstream01_reconciliation_log.md for what
+                    changed when the two pipelines' factors were merged.
 
 Floor area handling: calculate_from_boq() requires an explicit
 floor_area_basis alongside floor_area_sqm (e.g. "built_up_total" vs.

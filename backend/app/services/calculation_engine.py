@@ -6,9 +6,24 @@ cea_adjustment.py), falling back to unadjusted ICE M-grade factors when
 cement_type isn't available. Scope is still concrete + steel only --
 cement/mortar, bricks, glass, insulation, paint, and MEP are not yet
 included.
+
+Workstream 08: calculate_embodied_carbon() gained an optional
+`steel_factor_override_kgco2e_per_kg` parameter so a caller can recompute
+against a specific supplier's own already-sourced per-kg GWP figure (e.g.
+an EPD-verified low-carbon rebar product from the shared
+app/services/supplier_catalog.py) instead of the default CEA-adjusted
+IFC anchor -- same reasoning app/services/boq_carbon/substitution_engine.py
+already established for its own fixed-factor substitutions: a supplier's
+own declared, verified figure already reflects their real electricity
+mix, so CEA (which exists to scale a generic anchor to a project's LOCAL
+grid) is deliberately NOT applied on top of it. Defaults to None, which
+reproduces the exact pre-Workstream-08 default-anchor behavior -- every
+existing caller that doesn't pass this argument is unaffected.
 """
 
 from __future__ import annotations
+
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -58,7 +73,11 @@ class CalculationResult(BaseModel):
     )
 
 
-def calculate_embodied_carbon(project: ProjectSchema) -> CalculationResult:
+def calculate_embodied_carbon(
+    project: ProjectSchema,
+    steel_factor_override_kgco2e_per_kg: Optional[float] = None,
+    steel_factor_override_label: Optional[str] = None,
+) -> CalculationResult:
     gfa = project.mandatory.gfa_sqm.value
     if gfa is None or gfa <= 0:
         raise ValueError("Cannot calculate without a valid GFA")
@@ -130,12 +149,22 @@ def calculate_embodied_carbon(project: ProjectSchema) -> CalculationResult:
         steel_source = "fallback-default"
 
     steel_kg = gfa * steel_ratio
-    steel_factor_per_kg, steel_factor_source = get_steel_rebar_factor_per_kg(apply_cea=True)
+    if steel_factor_override_kgco2e_per_kg is not None:
+        # A specific, already-sourced supplier figure (see module
+        # docstring) -- used as-is, no CEA adjustment layered on top.
+        steel_factor_per_kg = steel_factor_override_kgco2e_per_kg
+        steel_factor_source = "supplier_epd_fixed"
+        material_label = "Reinforcement steel (rebar)" + (
+            f" -- {steel_factor_override_label}" if steel_factor_override_label else " -- supplier override"
+        )
+    else:
+        steel_factor_per_kg, steel_factor_source = get_steel_rebar_factor_per_kg(apply_cea=True)
+        material_label = "Reinforcement steel (rebar)"
     steel_carbon_kg = steel_kg * steel_factor_per_kg
 
     breakdown.append(
         MaterialBreakdown(
-            material="Reinforcement steel (rebar)",
+            material=material_label,
             quantity=steel_kg,
             quantity_unit="kg",
             factor_used=steel_factor_per_kg,

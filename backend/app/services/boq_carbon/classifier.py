@@ -54,6 +54,41 @@ so a genuine "supply and fix MS railing to staircase" item is still
 caught (nothing else would match it), but an incidental "protect the MS
 railing" aside inside an unrelated plaster/paint item no longer
 steals it.
+
+--- Workstream 07: four deferred classifier splits ---
+Flagged as known, deferred gaps in engine.py's own factor_disclaimer
+since Workstream 01 (see that field's text) and in emission_factors.
+json's per-category '_reconciliation' notes: this classifier used to
+collapse four real, materially-different sub-categories into one blended
+bucket each, always priced at that bucket's single default factor:
+
+  - 'tile' matched tile/tiling/vitrified/ceramic AND granite/marble --
+    natural stone is genuinely different material (0.28514 kgCO2e/kg vs
+    tile_ceramic's 0.62905 -- a 2.2x gap) but every granite/marble line
+    was being priced as ceramic tile.
+  - 'aluminium_glazing' matched real aluminium framing AND "upvc window"
+    text -- aluminium is 28.76 kgCO2e/kg, upvc_window_door_frame is
+    3.86621 -- a 7.4x gap -- but every uPVC line was being priced as
+    aluminium.
+  - 'blockwork' always priced as blockwork_aac (0.49284 kgCO2e/kg) even
+    when the line's own text said "solid block"/"concrete block", which
+    is dense concrete block (0.15946 -- a ~3x gap).
+  - 'plaster' always priced as plaster_cement (0.4167 kgCO2e/kg) even
+    when the line's own text said "gypsum"/"POP", which is a very
+    different, much lower factor (0.099 -- a ~4.2x gap).
+
+Fix: each of these four is now a "family" match first (unchanged
+regexes, so nothing about WHETHER a line is tile/aluminium/block/plaster
+changes), then refined to its final canonical category via a second,
+narrower keyword check -- the exact same two-step shape this file
+already uses for concrete's cement_type/grade (match RCC/PCC first, then
+refine cement type and grade from the same text). See classify_material's
+refinement block near the bottom of this file. Every classify_material()
+category value is now the literal canonical key app.services.
+emission_factors.get_factor() expects (matching CATEGORY_STEEL_REBAR/
+CATEGORY_STEEL_SECTION/CATEGORY_BRICK, which already were) -- engine.py's
+compute_line_gwp() no longer hardcodes which canonical entry a bucket
+resolves to, it just calls get_factor(category) directly.
 """
 
 from __future__ import annotations
@@ -91,7 +126,18 @@ _STEEL_SECTION_STRONG_RE = re.compile(
 # in both real BOQs checked so far. Checked LAST (see module docstring).
 _STEEL_SECTION_WEAK_RE = re.compile(r"\b(ms\s*railing|ms\s*grill)\b", re.I)
 _BRICK_RE = re.compile(r"\b(brick\s*work|burnt\s*clay\s*brick|clay\s*brick)\b", re.I)
-_BLOCK_RE = re.compile(r"\b(aac\s*block|block\s*work|solid\s*block|concrete\s*block|fly\s*ash\s*brick)\b", re.I)
+# Family match -- catches every blockwork line, AAC or dense alike (same
+# regex as before Workstream 07). Which of the two it actually is gets
+# decided afterward by _BLOCK_DENSE_RE, see classify_material's
+# refinement block and the module docstring's WS07 section.
+_BLOCK_RE = re.compile(r"\b(aac\s*block|block\s*work|solid\s*block|concrete\s*block|dense\s*block|fly\s*ash\s*brick)\b", re.I)
+# Refinement only -- "solid"/"dense"/bare "concrete block" text means
+# dense concrete block, not AAC/aircrete. Checked only after _BLOCK_RE
+# has already matched; a line with neither this nor an explicit AAC/
+# aircrete keyword keeps this classifier's existing AAC default (see
+# emission_factors.json's blockwork_aac '_reconciliation' note for why
+# AAC stays the sensible unqualified default).
+_BLOCK_DENSE_RE = re.compile(r"\b(solid\s*block|dense\s*block|concrete\s*block)\b", re.I)
 # "plaster\w*" (not "plaster\b") deliberately -- confirmed via
 # diagnose_coverage_gaps.py against real Botanico/Ecopolitan BOQs that
 # the word-bounded "\bplaster\b" silently fails to match the extremely
@@ -104,9 +150,30 @@ _BLOCK_RE = re.compile(r"\b(aac\s*block|block\s*work|solid\s*block|concrete\s*bl
 # same gerund-collision problem in either real BOQ checked so far, so
 # they keep the tighter \b on both sides.
 _PLASTER_RE = re.compile(r"\b(plaster\w*|rendering|screed)\b", re.I)
+# Refinement only -- decides cement vs gypsum for a line _PLASTER_RE has
+# already matched. "pop" is the standard Indian-BOQ abbreviation for
+# Plaster of Paris (gypsum plaster), extremely common; word-bounded so it
+# doesn't match "popular"/"population"-style substrings.
+_GYPSUM_RE = re.compile(r"\b(gypsum|plaster\s*of\s*paris|pop)\b", re.I)
+# Family match -- catches every tile-finish line, ceramic/vitrified/stone
+# alike (same regex as before Workstream 07). Which of those it actually
+# is gets decided afterward by _STONE_RE, see classify_material's
+# refinement block and the module docstring's WS07 section.
 _TILE_RE = re.compile(r"\b(tile|tiling|granite|marble|vitrified|ceramic)\b", re.I)
+# Refinement only -- granite/marble is natural stone, not ceramic/
+# vitrified tile (see WS07 section above for the 2.2x factor gap this
+# closes). Checked only after _TILE_RE has already matched.
+_STONE_RE = re.compile(r"\b(granite|marble)\b", re.I)
 _PAINT_RE = re.compile(r"\b(paint|distemper|primer|enamel|emulsion|putty|white\s*wash)\b", re.I)
-_ALU_RE = re.compile(r"\b(aluminium|aluminum|alucobond|upvc\s*window)\b", re.I)
+# Family match -- catches every aluminium-or-uPVC framing line (widened
+# from a bare "upvc\s*window" alternative to bare "upvc" as of WS07, so
+# "Upvc Door"/"UPVC Ventilators"/etc -- all real text confirmed against
+# the production master item-code dataset -- are caught too, not just
+# the one "upvc window" phrasing). Which of the two it actually is gets
+# decided afterward by _UPVC_RE, see classify_material's refinement block.
+_ALU_RE = re.compile(r"\b(aluminium|aluminum|alucobond|upvc)\b", re.I)
+# Refinement only -- checked only after _ALU_RE has already matched.
+_UPVC_RE = re.compile(r"\bupvc\b", re.I)
 _GLASS_RE = re.compile(r"\bglass|glazing\b", re.I)
 # Timber -- deliberately NOT a bare "wood\w*" match. Checked against both
 # real BOQs (Ecopolitan: 75 genuine hits, all door/window-frame joinery
@@ -226,13 +293,34 @@ CATEGORY_PCC = "pcc"
 CATEGORY_STEEL_REBAR = "reinforcement_steel"
 CATEGORY_STEEL_SECTION = "structural_steel"
 CATEGORY_BRICK = "brickwork"
-CATEGORY_BLOCK = "blockwork"
-CATEGORY_PLASTER = "plaster"
-CATEGORY_TILE = "tile"
 CATEGORY_PAINT = "paint"
-CATEGORY_ALUMINIUM = "aluminium_glazing"
 CATEGORY_GLASS = "glass"
 CATEGORY_TIMBER = "timber"
+
+# Workstream 07: these four are now split into their final canonical
+# categories (see module docstring's WS07 section) -- each literal string
+# is exactly the key app.services.emission_factors.get_factor() expects,
+# matching how CATEGORY_STEEL_REBAR/CATEGORY_STEEL_SECTION/CATEGORY_BRICK
+# already worked. _ORDERED_RULES still matches on the four private
+# "family" sentinels below first (unchanged regexes); classify_material()
+# resolves each family sentinel to one of these afterward.
+CATEGORY_BLOCKWORK_AAC = "blockwork_aac"
+CATEGORY_BLOCKWORK_DENSE = "blockwork_dense"
+CATEGORY_PLASTER_CEMENT = "plaster_cement"
+CATEGORY_PLASTER_GYPSUM = "plaster_gypsum"
+CATEGORY_TILE_CERAMIC = "tile_ceramic"
+CATEGORY_NATURAL_STONE = "natural_stone"
+CATEGORY_ALUMINIUM = "aluminium"
+CATEGORY_UPVC = "upvc_window_door_frame"
+
+# Private matching sentinels -- never returned by classify_material()
+# itself, only used as _ORDERED_RULES keys so the "is this line in the
+# blockwork/plaster/tile/aluminium family at all" match stays a single,
+# unchanged regex per family (see WS07 section above).
+_BLOCK_FAMILY = "_blockwork_family"
+_PLASTER_FAMILY = "_plaster_family"
+_TILE_FAMILY = "_tile_family"
+_ALU_FAMILY = "_aluminium_family"
 
 # Order matters: steel checked before concrete, since a rebar line's
 # hierarchy context frequently mentions "RCC"/"Reinforced Cement
@@ -249,12 +337,12 @@ _ORDERED_RULES: list[tuple[str, re.Pattern]] = [
     (CATEGORY_PCC, _PCC_RE),  # PCC checked before RCC/generic: more specific
     (CATEGORY_RCC, _RCC_RE),
     (CATEGORY_BRICK, _BRICK_RE),
-    (CATEGORY_BLOCK, _BLOCK_RE),
+    (_BLOCK_FAMILY, _BLOCK_RE),
     (CATEGORY_TIMBER, _TIMBER_RE),
-    (CATEGORY_PLASTER, _PLASTER_RE),
-    (CATEGORY_TILE, _TILE_RE),
+    (_PLASTER_FAMILY, _PLASTER_RE),
+    (_TILE_FAMILY, _TILE_RE),
     (CATEGORY_PAINT, _PAINT_RE),
-    (CATEGORY_ALUMINIUM, _ALU_RE),
+    (_ALU_FAMILY, _ALU_RE),
     (CATEGORY_GLASS, _GLASS_RE),
     (CATEGORY_STEEL_SECTION, _STEEL_SECTION_WEAK_RE),
 ]
@@ -281,6 +369,20 @@ def classify_material(enriched_description: str) -> MaterialClassification:
 
     if category is None and _GENERIC_CONCRETE_RE.search(text):
         category = CATEGORY_RCC  # unlabeled concrete defaults to structural RCC, see module docstring
+
+    # Workstream 07: resolve each matched "family" sentinel to its final
+    # canonical sub-category -- the same two-step shape this file already
+    # uses for concrete's cement_type/grade below (match the broad
+    # category first, then refine from the same text). See module
+    # docstring's WS07 section for the factor gaps each split closes.
+    if category == _TILE_FAMILY:
+        category = CATEGORY_NATURAL_STONE if _STONE_RE.search(text) else CATEGORY_TILE_CERAMIC
+    elif category == _ALU_FAMILY:
+        category = CATEGORY_UPVC if _UPVC_RE.search(text) else CATEGORY_ALUMINIUM
+    elif category == _BLOCK_FAMILY:
+        category = CATEGORY_BLOCKWORK_DENSE if _BLOCK_DENSE_RE.search(text) else CATEGORY_BLOCKWORK_AAC
+    elif category == _PLASTER_FAMILY:
+        category = CATEGORY_PLASTER_GYPSUM if _GYPSUM_RE.search(text) else CATEGORY_PLASTER_CEMENT
 
     cement_type = None
     grade = None

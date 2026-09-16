@@ -20,7 +20,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.schemas.project_schema import ProjectSchema
-from app.services import project_store
+from app.services import company_store, project_store
 from app.services.project_boq_refinement import refine_project_with_boq
 
 router = APIRouter()
@@ -32,8 +32,12 @@ class RefineResponse(BaseModel):
 
 
 @router.post("/refine/{project_id}", response_model=RefineResponse)
-async def refine_with_own_boq(project_id: str, boq_file: UploadFile = File(...)) -> RefineResponse:
-    project = project_store.load_project(project_id)
+async def refine_with_own_boq(
+    project_id: str,
+    boq_file: UploadFile = File(...),
+    company_id: str = company_store.DEFAULT_COMPANY_ID,
+) -> RefineResponse:
+    project = project_store.load_project(project_id, company_id=company_id)
     if project is None:
         raise HTTPException(status_code=404, detail=f"No project found with id '{project_id}'")
 

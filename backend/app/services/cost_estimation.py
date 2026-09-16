@@ -14,6 +14,10 @@ distinct cost drivers).
 If pricing year is unknown, the raw historical BOQ rate is used as-is.
 Falls back to a generic unsourced placeholder rate only when no
 BOQ-sourced rate exists at all.
+
+Workstream 04: priced_year is looked up under project.company_id, so a
+company only ever gets inflation-adjusted against its own reference
+projects' pricing.
 """
 
 from __future__ import annotations
@@ -66,10 +70,10 @@ class CostEstimate(BaseModel):
     )
 
 
-def _get_priced_year(rate_source: str | None) -> int | None:
+def _get_priced_year(rate_source: str | None, company_id: str) -> int | None:
     if rate_source is None or rate_source == "own_boq":
         return None
-    metadata = reference_store.get_metadata(rate_source)
+    metadata = reference_store.get_metadata(rate_source, company_id=company_id)
     if metadata is None:
         return None
     return metadata.get("priced_year")
@@ -103,7 +107,7 @@ def estimate_cost(project: ProjectSchema, carbon_result: CalculationResult) -> C
 
         if base_rate is not None:
             provenance = "own-boq-extracted" if rate_source == "own_boq" else f"boq-sourced ({rate_source})"
-            priced_year = _get_priced_year(rate_source)
+            priced_year = _get_priced_year(rate_source, company_id=project.company_id)
         else:
             base_rate = FALLBACK_CONCRETE_COST_PER_M3 if item.quantity_unit == "m3" else FALLBACK_STEEL_COST_PER_KG
             provenance = "fallback-placeholder (unsourced)"

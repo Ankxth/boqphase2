@@ -1,0 +1,37 @@
+{
+  "n_line_items_parsed": 7910,
+  "n_line_items_computed": 1307,
+  "total_gwp_kg_co2e": 46645882.54576744,
+  "total_gwp_tonnes_co2e": 46645.88254576744,
+  "gwp_per_sqm": 226.4564952546377,
+  "parse_checksum_ok": true,
+  "by_category": [
+    {
+      "category": "reinforcement_steel",
+      "gwp_kg_co2e": 24449251.855593555,
+      "line_item_count": 8
+    },
+    {
+      "category": "concrete",
+      "gwp_kg_co2e": 21460376.83636103,
+      "line_item_count": 922
+    },
+    {
+      "category": "structural_steel",
+      "gwp_kg_co2e": 711341.2064487725,
+      "line_item_count": 375
+    },
+    {
+      "category": "glass",
+      "gwp_kg_co2e": 24912.647364086726,
+      "line_item_count": 2
+    }
+  ],
+  "_meta": {
+    "pipeline": "wo_carbon",
+    "source_path": "app/data/work_orders/Provident Ecopolitan_WO_KPIL.pdf",
+    "generated_at": "2026-09-15T11:03:37.109683+00:00",
+    "verified_by": "claude_sandbox_run",
+    "changelog": "Workstream 01: unified emission-factor source (structural_steel/aluminium/glass/brickwork now CEA-adjusted; plaster/tile now IFC-sourced replacing placeholders; concrete now grade-differentiated on the WO pipeline too; steel_reinforcement/structural_steel category names reconciled between pipelines) -- see docs/workstream01_reconciliation_log.md"
+  }
+}

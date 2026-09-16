@@ -1,0 +1,42 @@
+name: Tests
+
+# Workstream 09: wires the existing pytest suite into CI so it runs on
+# every push/PR instead of only when someone remembers to run it
+# locally -- Foundation Plan WS05's second half. Nothing about the tests
+# themselves changed to make this possible; this file just runs the same
+# `pytest -v` command documented in every prior workstream's delivery
+# message, on GitHub's own runners.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}  # lets you trigger a run by hand from the Actions tab, e.g. to re-verify without a new commit
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # The full suite includes real PDF extraction (pdfplumber, pure
+    # Python -- see Workstream 03) against two multi-hundred-page real
+    # Work Orders, which is genuinely slow (observed 8-20 minutes
+    # depending on the machine). 30 minutes gives real headroom without
+    # letting a hang burn the whole job budget silently.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Matches the interpreter version this project has actually
+          # been developed and verified against (see every workstream's
+          # delivery message) -- not just "whatever's latest".
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run test suite
+        run: pytest -v

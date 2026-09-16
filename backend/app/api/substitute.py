@@ -7,7 +7,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.services import project_store
+from app.services import company_store, project_store
 from app.services.calculation_engine import calculate_embodied_carbon
 from app.services.substitution import (
     CombinedSubstitutionImpact,
@@ -26,8 +26,8 @@ class SubstituteResponse(BaseModel):
 
 
 @router.post("/substitute/{project_id}", response_model=SubstituteResponse)
-def substitute(project_id: str) -> SubstituteResponse:
-    project = project_store.load_project(project_id)
+def substitute(project_id: str, company_id: str = company_store.DEFAULT_COMPANY_ID) -> SubstituteResponse:
+    project = project_store.load_project(project_id, company_id=company_id)
     if project is None:
         raise HTTPException(status_code=404, detail=f"No project found with id '{project_id}'")
 

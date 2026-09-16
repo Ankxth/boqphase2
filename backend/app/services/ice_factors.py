@@ -66,6 +66,19 @@ def load_factors() -> dict:
         return json.load(f)
 
 
+def get_concrete_density_kg_per_m3() -> float:
+    """The single density figure (2400 kg/m3, IFC India's own assumption)
+    used to convert a Cum-priced concrete line to mass. Added as part of
+    Workstream 01 (one emission-factor source) so boq_carbon/engine.py
+    and wo_carbon/wo_carbon_engine.py both read this from here instead of
+    each hardcoding their own '2400.0' constant -- harmless while the two
+    copies agree, but a real drift risk the moment one of them is edited
+    without the other, which is exactly the class of bug this workstream
+    exists to close off.
+    """
+    return load_factors()["ifc_india"]["concrete"]["default_density_kg_per_m3"]
+
+
 def get_concrete_grade_scale_factor(grade: Optional[str]) -> float:
     """Ratio of ICE's CEM I per-kg GWP for `grade` vs its M40 value.
     Multiply IFC's India-specific cement-type anchor by this to

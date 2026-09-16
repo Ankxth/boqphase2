@@ -1,0 +1,62 @@
+{
+  "concrete": {
+    "cea_adjusted": "yes",
+    "contributes": "yes",
+    "ef_kgco2e_per_kg": 0.08386,
+    "ef_source": "IFC India Construction Materials Database (2017), Table 14, by cement type, CEA grid-adjusted.",
+    "evidence_tier": "ifc_primary_source",
+    "material_category": "concrete",
+    "top5": "yes",
+    "unit_note": "Convert Cum to kg using concrete density 2400 kg/m3 (IFC default), then apply per-kg factor."
+  },
+  "paint": {
+    "cea_adjusted": "no",
+    "contributes": "yes",
+    "ef_kgco2e_per_kg": 2.6,
+    "ef_source": "Retained from the uploaded Embodied Carbon Contributor Flags sheet (ICE Database, Circular Ecology/Univ. of Bath) -- no defensible IFC India match found. (ICE paint, general, midpoint of water/solvent-based range).",
+    "evidence_tier": "ice_uk_proxy",
+    "material_category": "paint",
+    "top5": "no",
+    "unit_note": "NEEDS AREAL-MASS ASSUMPTION -- an area-priced row needs a kg/m2 conversion figure; only aluminium (12 kg/m2) and glass (15 kg/m2) have a documented assumption so far. Paint's own areal-mass figure is still open."
+  },
+  "plaster_gypsum": {
+    "cea_adjusted": "no",
+    "contributes": "yes",
+    "ef_kgco2e_per_kg": 0.099,
+    "ef_source": "IFC India Construction Materials Database (2017), Table 14 -- Gypsum plaster. Raw value, NOT CEA-adjusted.",
+    "evidence_tier": "ifc_primary_source",
+    "material_category": "plaster_gypsum",
+    "top5": "no",
+    "unit_note": "NEEDS AREAL-MASS ASSUMPTION -- an area-priced row needs a kg/m2 conversion figure; only aluminium and glass have one so far."
+  },
+  "steel_gi_galvanized": {
+    "cea_adjusted": "yes",
+    "contributes": "yes",
+    "ef_kgco2e_per_kg": 2.80449,
+    "ef_source": "IFC India Construction Materials Database (2017), Table 14 -- Electrogalvanized steel sheet, CEA grid-adjusted.",
+    "evidence_tier": "ifc_primary_source",
+    "material_category": "steel_gi_galvanized",
+    "top5": "yes",
+    "unit_note": "Direct mass conversion: qty already in mass units (KG/KGS/MT), apply per-kg factor."
+  },
+  "steel_stainless": {
+    "cea_adjusted": "no",
+    "contributes": "yes",
+    "ef_kgco2e_per_kg": 4.17786,
+    "ef_source": "ICE Database v4.1 (Oct 2025), Steel material profile, row 'Steel, Stainless' -- average of 28 datapoints. No IFC India stainless-steel line exists; this is the only project data file with a stainless-steel figure.",
+    "evidence_tier": "ice_uk_proxy",
+    "material_category": "steel_stainless",
+    "top5": "no",
+    "unit_note": "Direct mass conversion: qty already in mass units (KG/KGS/MT), apply per-kg factor."
+  },
+  "structural_steel": {
+    "cea_adjusted": "yes",
+    "contributes": "yes",
+    "ef_kgco2e_per_kg": 2.34713,
+    "ef_source": "IFC India Construction Materials Database (2017), Table 14, p.69 -- 'Steel section', CEA grid-adjusted.",
+    "evidence_tier": "ifc_primary_source",
+    "material_category": "structural_steel",
+    "top5": "yes",
+    "unit_note": "Direct mass conversion: qty already in mass units (KG/KGS/MT), apply per-kg factor."
+  }
+}

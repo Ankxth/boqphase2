@@ -1,8 +1,8 @@
 {
-  "project_id": "39257e8c-1647-452a-88da-73cc6f49045b",
+  "project_id": "4a7d05a0-3bbc-411a-ac02-312181f6f5c7",
   "mandatory": {
     "gfa_sqm": {
-      "value": 50000.0,
+      "value": 52000.0,
       "source": "user-entered",
       "confidence": 1.0
     },
@@ -19,12 +19,12 @@
   },
   "tier2": {
     "typology": {
-      "value": "residential",
+      "value": "commercial",
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "num_floors": {
-      "value": 16,
+      "value": 12,
       "source": "user-entered",
       "confidence": 1.0
     },
@@ -54,14 +54,14 @@
       "confidence": 0.4
     },
     "parking_area_sqm": {
-      "value": 5000.0,
+      "value": 6500.0,
       "source": "llm-estimated",
       "confidence": 0.4
     }
   },
   "tier3": {
     "concrete_grade_mix": {
-      "value": "M35",
+      "value": "M30",
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -71,17 +71,17 @@
       "confidence": 0.4
     },
     "steel_reinforcement_ratio_kg_per_sqm": {
-      "value": 115.0,
+      "value": 85.0,
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "facade_type": {
-      "value": "concrete",
+      "value": "glass",
       "source": "llm-estimated",
       "confidence": 0.4
     },
     "glazing_pct": {
-      "value": 20.0,
+      "value": 70.0,
       "source": "llm-estimated",
       "confidence": 0.4
     },
@@ -101,5 +101,6 @@
       "confidence": 0.4
     }
   },
-  "_derived": {}
+  "_derived": {},
+  "company_id": "provident"
 }

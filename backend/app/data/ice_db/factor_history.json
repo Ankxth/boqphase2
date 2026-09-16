@@ -1,0 +1,663 @@
+{
+  "_meta": {
+    "scope": "Workstream 09: versioned history for every category served by app/services/emission_factors.py (the flat per-category factor source). Deliberately does NOT cover concrete (rcc/pcc) or reinforcement steel's own per-kg factor -- those stay in app/data/ice_db/ice_db_factors.json's ifc_india section (cement-type/grade-keyed, a genuinely different schema) and are out of scope for this workstream's versioning; a future workstream can extend this same pattern to that file if needed.",
+    "how_this_is_used": "app/data/ice_db/emission_factors.json (the file both carbon engines actually read at calculation time) is now a GENERATED snapshot of whichever entry below is currently valid (valid_to == null) per category -- see scripts/generate_emission_factors_snapshot.py. This file (factor_history.json) is the hand-edited source of truth; emission_factors.json is not edited by hand anymore. To record a new factor value, run scripts/update_emission_factor.py -- it closes out the previous entry's valid_to and appends the new one, then regenerates the snapshot for you.",
+    "baseline_date_caveat": "The 2026-09-01 valid_from date on every entry below is an honest INTERPRETATION of the \"2026.09.1\" version tag most (not all) of these entries already carried in emission_factors.json before this workstream -- the exact original date each figure was first entered was not separately recorded anywhere in this codebase, so this is the earliest date this migration can honestly claim, not a precise historical record. Every change from this point forward gets a real, exact valid_from."
+  },
+  "categories": {
+    "structural_steel": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "boq_carbon previously used 2.5 (the raw, un-CEA-adjusted IFC figure) via its own boq_carbon_extra_factors.json copy, which its own docstring flagged as 'not yet wired through ice_factors.py -- duplicated here for now'. wo_carbon's master_item_code_factors.json already had the correctly CEA-adjusted 2.34713. Verified by reproducing 2.34713 directly from apply_cea_adjustment_ifc(2.5, 0.76) -- exact match. The sourced, correctly-adjusted value wins: 2.34713.",
+        "value": {
+          "ef_kgco2e_per_kg": 2.3471297387830163,
+          "ef_source": "IFC India Construction Materials Database (2017) Table 14, Annex A, p.69 -- 'Steel section' = 2.5 kgCO2e/kg cradle-to-gate A1-A3, IPCC AR5, CEA-grid-adjusted (energy_derived_fraction_of_gwp 0.76, from Table 16 Annex C p.78: Electricity 0.50 + Fuels 1.40 of the 2.5 kgCO2e/kg total).",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "raw_value_pre_cea_kgco2e_per_kg": 2.5,
+          "energy_derived_fraction_of_gwp": 0.76,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "KG",
+              "KGS",
+              "MT"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null,
+          "_reconciliation": "boq_carbon previously used 2.5 (the raw, un-CEA-adjusted IFC figure) via its own boq_carbon_extra_factors.json copy, which its own docstring flagged as 'not yet wired through ice_factors.py -- duplicated here for now'. wo_carbon's master_item_code_factors.json already had the correctly CEA-adjusted 2.34713. Verified by reproducing 2.34713 directly from apply_cea_adjustment_ifc(2.5, 0.76) -- exact match. The sourced, correctly-adjusted value wins: 2.34713."
+        }
+      }
+    ],
+    "reinforcement_steel": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "_note": "Present here for discoverability only -- NOT read from this file. Both engines call app.services.ice_factors.get_steel_rebar_factor_per_kg(apply_cea=True), which is already the single shared source (2.442311911813715 kgCO2e/kg as of the current CEA grid factor). See ice_db_factors.json's ifc_india.steel_rebar entry for the underlying data.",
+          "superseded_by": null
+        }
+      }
+    ],
+    "steel_gi_galvanized": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 2.80449,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (ifc_primary_source tier). Not independently re-derived during Workstream 01 -- no boq_carbon equivalent existed to reconcile against.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "KG",
+              "KGS",
+              "MT"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "steel_stainless": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 4.17786,
+          "ef_source": "ICE Database v4.1 (Oct 2025), 'Steel, Stainless'. Carried forward from master_item_code_factors.json's pre-migration per-row value.",
+          "evidence_tier": "ice_uk_proxy",
+          "cea_adjusted": false,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "KG",
+              "KGS",
+              "MT"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "aluminium": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "boq_carbon previously used the raw, un-adjusted 31 kgCO2e/kg. wo_carbon's master file already had the CEA-adjusted 28.7632. Verified: apply_cea_adjustment_ifc(31, 0.8968) == 28.7632 exactly. Sourced+adjusted value wins.",
+        "value": {
+          "ef_kgco2e_per_kg": 28.763202337873093,
+          "ef_source": "IFC India Construction Materials Database (2017) Table 14/Annex A, p.67 -- 'ingot', 31 kgCO2e/kg cradle-to-gate A1-A3, stakeholder-validated by Hindalco Industries, CEA-grid-adjusted (energy_derived_fraction_of_gwp 0.8968, from Table 16 Annex C p.75). See boq_carbon_extra_factors.json's original aluminium entry (kept on disk, deprecated) for the full sourcing writeup, including the by_product_form breakdown and the three corroborating India-specific sources -- that provenance detail was not lost, just not duplicated into every canonical entry here.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "raw_value_pre_cea_kgco2e_per_kg": 31,
+          "energy_derived_fraction_of_gwp": 0.8968,
+          "areal_mass_kg_per_m2": 12.0,
+          "by_product_form_kgco2e_per_kg_pre_cea": {
+            "ingot": 31,
+            "extruded_profile": 33,
+            "extruded_profile_window_frame": 26,
+            "sheet": 32,
+            "profiled_cladding": 35,
+            "thin_composite_cladding": 18
+          },
+          "conversion": {
+            "basis": "mass_or_areal",
+            "units": [
+              "KG",
+              "KGS",
+              "SQM"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null,
+          "_reconciliation": "boq_carbon previously used the raw, un-adjusted 31 kgCO2e/kg. wo_carbon's master file already had the CEA-adjusted 28.7632. Verified: apply_cea_adjustment_ifc(31, 0.8968) == 28.7632 exactly. Sourced+adjusted value wins."
+        }
+      }
+    ],
+    "glass": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "boq_carbon previously used the raw, un-adjusted 1.2 kgCO2e/kg. wo_carbon's master file already had the CEA-adjusted 1.12276. Verified: apply_cea_adjustment_ifc(1.2, 0.8) == 1.12276 exactly. Sourced+adjusted value wins.",
+        "value": {
+          "ef_kgco2e_per_kg": 1.1227602890693134,
+          "ef_source": "IFC India Construction Materials Database (2017) Table 14/Annex A, p.68 -- float glass, 1.2 kgCO2e/kg cradle-to-gate A1-A3, corroborated by an Asahi India Glass EPD, CEA-grid-adjusted (energy_derived_fraction_of_gwp 0.8, Table 16 Annex C p.77). See boq_carbon_extra_factors.json's original glass entry (deprecated, kept on disk) for the full EPD cross-check writeup and the processed_glass_kgco2e_per_m2_6mm per-product-type table.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "raw_value_pre_cea_kgco2e_per_kg": 1.2,
+          "energy_derived_fraction_of_gwp": 0.8,
+          "areal_mass_kg_per_m2": 15.0,
+          "processed_glass_kgco2e_per_m2_6mm_pre_cea": {
+            "heat_tempered": 44.7,
+            "laminated": 93.6,
+            "igu_double_glazed": 52.7,
+            "printed": 47.2
+          },
+          "conversion": {
+            "basis": "mass_or_areal",
+            "units": [
+              "KG",
+              "SQM",
+              "FT2"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null,
+          "_reconciliation": "boq_carbon previously used the raw, un-adjusted 1.2 kgCO2e/kg. wo_carbon's master file already had the CEA-adjusted 1.12276. Verified: apply_cea_adjustment_ifc(1.2, 0.8) == 1.12276 exactly. Sourced+adjusted value wins."
+        }
+      }
+    ],
+    "upvc_window_door_frame": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 3.86621,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (ifc_primary_source tier). No boq_carbon equivalent existed -- boq_carbon's classifier previously lumped 'upvc window' text into the same aluminium_glazing bucket as real aluminium framing (a 7.4x factor difference between the two materials); this category is now available for boq_carbon's classifier to key against once it's extended to distinguish uPVC frames from aluminium framing (not done in this pass -- see the Workstream 01 reconciliation log).",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "KG",
+              "KGS"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "brickwork": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "boq_carbon previously used the raw, un-adjusted 0.39 kgCO2e/kg. wo_carbon's master file already had the CEA-adjusted 0.36104. Verified: apply_cea_adjustment_ifc(0.39, 0.9231) == 0.36103 (rounds to 0.36104). Sourced+adjusted value wins.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.3610343842787026,
+          "ef_source": "IFC India Construction Materials Database (2017) Table 14/Annex A, p.67-68 -- blended common/facing brick average, 0.39 kgCO2e/kg cradle-to-gate A1-A3, stakeholder-validated, CEA-grid-adjusted (energy_derived_fraction_of_gwp 0.9231, Table 16 Annex C p.76). See boq_carbon_extra_factors.json's original brick_clay entry (deprecated, kept on disk) for the by_kiln_type breakdown and the Jay Jalaram Brick Works EPD cross-check.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "raw_value_pre_cea_kgco2e_per_kg": 0.39,
+          "energy_derived_fraction_of_gwp": 0.9231,
+          "density_kg_per_m3": 1800,
+          "conversion": {
+            "basis": "mass_or_volume_or_areal",
+            "units": [
+              "KG",
+              "M3",
+              "SQM"
+            ],
+            "assumed_wall_thickness_m": 0.2
+          },
+          "version": "2026.09.1",
+          "superseded_by": null,
+          "_reconciliation": "boq_carbon previously used the raw, un-adjusted 0.39 kgCO2e/kg. wo_carbon's master file already had the CEA-adjusted 0.36104. Verified: apply_cea_adjustment_ifc(0.39, 0.9231) == 0.36103 (rounds to 0.36104). Sourced+adjusted value wins."
+        }
+      }
+    ],
+    "blockwork_aac": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "boq_carbon's classifier does not yet distinguish AAC from dense block (one 'blockwork' regex bucket) -- its engine.py uses THIS entry (AAC) as its single default, since AAC is the more common modern specification in the two reference BOQs' block line items reviewed, replacing a rough unsourced placeholder (0.40 kgCO2e/kg). Splitting boq_carbon's classifier to detect AAC vs dense block (the 'aac'/'aircrete' keyword is already sitting right there in the existing regex) is a deferred, documented follow-up -- see the Workstream 01 reconciliation log.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.49284,
+          "ef_source": "wo_carbon's master file carries TWO distinct, IFC-sourced block factors depending on block type -- AAC/aircrete block (this entry, 0.49284 kgCO2e/kg) and dense concrete block (blockwork_dense, 0.15946 kgCO2e/kg), a real ~3x difference. Kept as two separate canonical categories (not collapsed into one blended 'blockwork') precisely so wo_carbon's existing per-Activity-Code AAC-vs-dense distinction is preserved rather than lost in this migration.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "density_kg_per_m3": 700,
+          "conversion": {
+            "basis": "mass_or_volume_or_areal",
+            "units": [
+              "KG",
+              "M3",
+              "SQM"
+            ],
+            "assumed_wall_thickness_m": 0.2
+          },
+          "version": "2026.09.1",
+          "superseded_by": null,
+          "_reconciliation": "boq_carbon's classifier does not yet distinguish AAC from dense block (one 'blockwork' regex bucket) -- its engine.py uses THIS entry (AAC) as its single default, since AAC is the more common modern specification in the two reference BOQs' block line items reviewed, replacing a rough unsourced placeholder (0.40 kgCO2e/kg). Splitting boq_carbon's classifier to detect AAC vs dense block (the 'aac'/'aircrete' keyword is already sitting right there in the existing regex) is a deferred, documented follow-up -- see the Workstream 01 reconciliation log."
+        }
+      }
+    ],
+    "blockwork_dense": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.15946,
+          "ef_source": "Carried forward unchanged from master_item_code_factors.json's pre-migration per-row value (dense concrete block, ifc_primary_source tier). See blockwork_aac's entry for the AAC/dense split rationale.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "density_kg_per_m3": 700,
+          "conversion": {
+            "basis": "mass_or_volume_or_areal",
+            "units": [
+              "KG",
+              "M3",
+              "SQM"
+            ],
+            "assumed_wall_thickness_m": 0.2
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "plaster_cement": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "boq_carbon's classifier does not yet distinguish cement-based from gypsum plaster (one 'plaster' regex bucket matching plaster/plastering/rendering/screed) -- its engine.py uses THIS entry (cement-based) as its single default, replacing a rough unsourced placeholder (0.20 kgCO2e/kg -- its own source note said 'consider replacing with IFC's direct cement-based-plaster line at 0.44, roughly 2x this placeholder'; 0.4167 is that exact substitution, CEA-adjustment not available for this line in either source file). This is roughly a 2x increase to every plaster line's GWP contribution on the boq_carbon side -- expected, and the single largest reconciliation delta of this workstream. Splitting boq_carbon's classifier to detect a 'gypsum' keyword (already proven real in Botanico BOQ text, see test_classifier_regression.py's gypsum-plaster test) is a deferred, documented follow-up -- see the Workstream 01 reconciliation log.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.4167,
+          "ef_source": "IFC India Construction Materials Database (2017) Table 14 -- 'Cement based plaster', 0.4167 kgCO2e/kg. Kept separate from plaster_gypsum (not blended) precisely so wo_carbon's existing per-Activity-Code cement-vs-gypsum distinction is preserved rather than lost in this migration.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": false,
+          "density_kg_per_m3": 1900,
+          "assumed_thickness_m": 0.015,
+          "conversion": {
+            "basis": "areal_or_volume",
+            "units": [
+              "SQM",
+              "M3"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null,
+          "_reconciliation": "boq_carbon's classifier does not yet distinguish cement-based from gypsum plaster (one 'plaster' regex bucket matching plaster/plastering/rendering/screed) -- its engine.py uses THIS entry (cement-based) as its single default, replacing a rough unsourced placeholder (0.20 kgCO2e/kg -- its own source note said 'consider replacing with IFC's direct cement-based-plaster line at 0.44, roughly 2x this placeholder'; 0.4167 is that exact substitution, CEA-adjustment not available for this line in either source file). This is roughly a 2x increase to every plaster line's GWP contribution on the boq_carbon side -- expected, and the single largest reconciliation delta of this workstream. Splitting boq_carbon's classifier to detect a 'gypsum' keyword (already proven real in Botanico BOQ text, see test_classifier_regression.py's gypsum-plaster test) is a deferred, documented follow-up -- see the Workstream 01 reconciliation log."
+        }
+      }
+    ],
+    "plaster_gypsum": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.099,
+          "ef_source": "Carried forward unchanged from master_item_code_factors.json's pre-migration per-row value (gypsum plaster, ifc_primary_source tier). See plaster_cement's entry for the cement/gypsum split rationale.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": false,
+          "density_kg_per_m3": 1900,
+          "assumed_thickness_m": 0.015,
+          "conversion": {
+            "basis": "areal_or_volume",
+            "units": [
+              "SQM",
+              "M3"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "tile_ceramic": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "boq_carbon's classifier does not yet distinguish tile finish types (one 'tile' regex bucket) -- its engine.py uses THIS entry (ceramic/glazed default) as its single default, replacing a rough unsourced placeholder (0.70 kgCO2e/kg) -- an 11% decrease. IMPORTANT SEPARATE ISSUE, not fixed by this value swap: boq_carbon's classifier's tile pattern also currently matches 'granite'/'marble' text, which should be priced as natural_stone instead (0.28514 kgCO2e/kg -- see that entry, ~2.2x lower than tile). That mis-bucketing is a materially larger error than the ceramic-vs-vitrified gap and is flagged as the higher-priority deferred classifier fix -- see the Workstream 01 reconciliation log.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.62905,
+          "ef_source": "IFC India Construction Materials Database (2017) Table 14 -- 'Glazed ceramic floor tiles', 0.62905 kgCO2e/kg (CEA-adjusted), wo_carbon's master file's own stated 'default'. Kept separate from tile_vitrified (not blended) so wo_carbon's existing per-Activity-Code distinction is preserved rather than lost in this migration -- though the two values are close (0.9% apart), so the practical stakes of this particular split are low.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "areal_mass_kg_per_m2": 18.0,
+          "conversion": {
+            "basis": "areal_or_linear",
+            "units": [
+              "SQM",
+              "RMT"
+            ],
+            "assumed_skirting_height_m": 0.1
+          },
+          "version": "2026.09.1",
+          "superseded_by": null,
+          "_reconciliation": "boq_carbon's classifier does not yet distinguish tile finish types (one 'tile' regex bucket) -- its engine.py uses THIS entry (ceramic/glazed default) as its single default, replacing a rough unsourced placeholder (0.70 kgCO2e/kg) -- an 11% decrease. IMPORTANT SEPARATE ISSUE, not fixed by this value swap: boq_carbon's classifier's tile pattern also currently matches 'granite'/'marble' text, which should be priced as natural_stone instead (0.28514 kgCO2e/kg -- see that entry, ~2.2x lower than tile). That mis-bucketing is a materially larger error than the ceramic-vs-vitrified gap and is flagged as the higher-priority deferred classifier fix -- see the Workstream 01 reconciliation log."
+        }
+      }
+    ],
+    "tile_vitrified": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.63494,
+          "ef_source": "Carried forward unchanged from master_item_code_factors.json's pre-migration per-row value (vitrified tile, ifc_primary_source tier). See tile_ceramic's entry for the ceramic/vitrified split rationale.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "areal_mass_kg_per_m2": 18.0,
+          "conversion": {
+            "basis": "areal_or_linear",
+            "units": [
+              "SQM",
+              "RMT"
+            ],
+            "assumed_skirting_height_m": 0.1
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "natural_stone": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.28514,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (ifc_primary_source tier, granite/marble/stone cladding). No boq_carbon equivalent existed as a distinct category -- boq_carbon's classifier currently folds granite/marble text into its 'tile' bucket instead (see that entry's note). Added here so a future classifier split can key against it immediately once made.",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "conversion": {
+            "basis": "mass_or_areal",
+            "units": [
+              "KG",
+              "SQM"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "paint": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "No conflict -- both pipelines already agreed on 2.6 kgCO2e/kg. Formalized into the shared source unchanged.",
+        "value": {
+          "ef_kgco2e_per_kg": 2.6,
+          "ef_source": "ICE Database v4.1 -- generic paint/coating figure. boq_carbon and wo_carbon already independently used the identical 2.6 kgCO2e/kg value before this migration (no conflict to reconcile), both still explicitly PLACEHOLDER-tier -- neither an IFC nor an ICE India-specific paint factor has been sourced yet.",
+          "evidence_tier": "ice_uk_proxy",
+          "cea_adjusted": false,
+          "coverage_kg_per_m2": 0.15,
+          "conversion": {
+            "basis": "areal",
+            "units": [
+              "SQM"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null,
+          "_reconciliation": "No conflict -- both pipelines already agreed on 2.6 kgCO2e/kg. Formalized into the shared source unchanged."
+        }
+      }
+    ],
+    "timber_wood": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "No conflict -- both pipelines already agreed on 0.49 kgCO2e/kg. Formalized into the shared source unchanged.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.49,
+          "ef_source": "ICE Database v4.1 (Circular Ecology / University of Bath, Oct 2025), Timber sheet, 'excluding carbon storage', generic average. boq_carbon and wo_carbon already independently used the identical 0.49 kgCO2e/kg value before this migration.",
+          "evidence_tier": "ifc_primary_source(ICE-sourced value)",
+          "cea_adjusted": false,
+          "not_cea_adjustable": "Sourced from ICE v4.1 (UK/EU basis), not IFC India -- no documented UK grid baseline to adjust against. See the deprecated boq_carbon_extra_factors.json timber entry for the full reasoning (unchanged by this migration).",
+          "assumed_mass_kg_per_frame": 20.0,
+          "assumed_density_kg_per_m3": 650,
+          "assumed_areal_mass_kg_per_m2": 8.0,
+          "by_product_form_kgco2e_per_kg": {
+            "generic_average": 0.49,
+            "softwood": 0.26,
+            "hardwood": 0.31,
+            "plywood": 0.68,
+            "particle_board": 0.66,
+            "mdf": 0.86,
+            "clt_cross_laminated_timber": 0.25,
+            "glulam": 0.28,
+            "osb": 0.46,
+            "chipboard": 0.4
+          },
+          "conversion": {
+            "basis": "count_or_mass_or_volume_or_areal",
+            "units": [
+              "NOS",
+              "KG",
+              "MT",
+              "M3",
+              "SQM"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null,
+          "_reconciliation": "No conflict -- both pipelines already agreed on 0.49 kgCO2e/kg. Formalized into the shared source unchanged."
+        }
+      }
+    ],
+    "sand": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.00833,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (ifc_primary_source tier).",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "MT",
+              "KG"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "aggregate": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.00833,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (ifc_primary_source tier, same figure as sand).",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "MT",
+              "KG"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "cement_bagged": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.62946,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (ifc_primary_source tier, PPC default).",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "MT",
+              "KG"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "cement_mortar": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.13996,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (ifc_primary_source tier).",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "conversion": {
+            "basis": "mass_or_volume",
+            "units": [
+              "MT",
+              "KG",
+              "CUM"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "insulation_mineral_wool": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 1.30345,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (rockwool/mineral wool, ifc_primary_source tier).",
+          "evidence_tier": "ifc_primary_source",
+          "cea_adjusted": true,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "KG"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "insulation_generic": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 1.28,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (elastomeric/thermal generic insulation, ICE v4.1).",
+          "evidence_tier": "ice_uk_proxy",
+          "cea_adjusted": false,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "KG"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "waterproofing": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.5,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (bituminous membrane/coating, ICE v4.1).",
+          "evidence_tier": "ice_uk_proxy",
+          "cea_adjusted": false,
+          "conversion": {
+            "basis": "mass_or_areal",
+            "units": [
+              "KG",
+              "SQM"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "copper": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 2.6,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (electrical cable/conductor, ICE v4.1).",
+          "evidence_tier": "ice_uk_proxy",
+          "cea_adjusted": false,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "KG"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "pvc_pipe_fitting": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 2.41,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (PVC/uPVC/CPVC pipe/fitting, ICE v4.1).",
+          "evidence_tier": "ice_uk_proxy",
+          "cea_adjusted": false,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "KG"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ],
+    "bitumen_asphalt": [
+      {
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "changelog_note": "Workstream 01 baseline entry, migrated into the versioned history format by Workstream 09. No earlier recorded change exists for this category -- this IS the first entry, not a gap in the record.",
+        "value": {
+          "ef_kgco2e_per_kg": 0.43,
+          "ef_source": "Carried forward from master_item_code_factors.json's pre-migration per-row value (ICE v4.1).",
+          "evidence_tier": "ice_uk_proxy",
+          "cea_adjusted": false,
+          "conversion": {
+            "basis": "mass",
+            "units": [
+              "KG",
+              "MT"
+            ]
+          },
+          "version": "2026.09.1",
+          "superseded_by": null
+        }
+      }
+    ]
+  }
+}

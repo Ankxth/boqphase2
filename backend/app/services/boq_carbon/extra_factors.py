@@ -1,36 +1,48 @@
-"""Emission factors for the material categories ice_db_factors.json
-doesn't cover yet (everything except concrete and reinforcement steel).
+"""DEPRECATED as of Workstream 01 (one emission-factor source) -- no
+engine imports this module anymore. Kept only as a historical/backward-
+compatible shim so nothing that might still import `get_factor` from
+here breaks outright; it now delegates to app.services.emission_factors,
+the real canonical source.
 
-See boq_carbon_extra_factors.json's own "_status"/"_note" fields --
-these are placeholder assumptions, not yet verified the rigorous way
-concrete/steel were. Kept in a separate file/module rather than added
-into ice_db_factors.json directly, so Phase 1's existing, already-
-verified data file is never touched by Phase 2 work -- this file is
-purely additive.
+boq_carbon_extra_factors.json (this module's original data file) is
+still on disk, UNCHANGED, as the historical record of the original
+placeholder-quality figures and their full sourcing writeups (several of
+those writeups -- the by-product-form breakdowns, the EPD cross-checks --
+are longer than what got carried into emission_factors.json's entries,
+which quote the resolved number and a summary rather than repeating the
+full provenance essay). It is simply no longer read at calculation time.
+
+See app/services/emission_factors.py's module docstring for the full
+story of what changed and why.
 """
 
 from __future__ import annotations
-from functools import lru_cache
 
+import warnings
 
-import json
-from pathlib import Path
+from app.services.emission_factors import get_factor as _get_canonical_factor
 
-FACTORS_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "ice_db" / "boq_carbon_extra_factors.json"
-
-@lru_cache(maxsize=1) 
-def load_extra_factors() -> dict:
-    with open(FACTORS_PATH, "r") as f:
-        return json.load(f)
+# category name in THIS module's old vocabulary -> canonical name in
+# emission_factors.json ("structural_steel" was already boq_carbon's own
+# name and needed no rename; wo_carbon's master file used the reversed
+# "steel_structural"/"steel_reinforcement" convention and was the one
+# renamed instead, since boq_carbon's naming already matched Phase 1's
+# boq_extractor.py -- see the Workstream 01 reconciliation log).
+_LEGACY_NAME_MAP = {
+    "brick_clay": "brickwork",
+    "aac_block": "blockwork_aac",
+    "cement_plaster": "plaster_cement",
+    "ceramic_tile": "tile_ceramic",
+    "timber": "timber_wood",
+}
 
 
 def get_factor(category: str) -> dict:
-    """Returns the raw factor entry for a non-concrete/non-rebar
-    category (structural_steel, brick_clay, aac_block, cement_plaster,
-    ceramic_tile, paint, aluminium, glass). Raises KeyError if unknown.
-    """
-    factors = load_extra_factors()
-    entry = factors.get(category)
-    if entry is None:
-        raise KeyError(f"No extra factor entry for category '{category}'")
-    return entry
+    warnings.warn(
+        "app.services.boq_carbon.extra_factors.get_factor() is deprecated -- "
+        "use app.services.emission_factors.get_factor() instead (Workstream 01).",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    canonical_name = _LEGACY_NAME_MAP.get(category, category)
+    return _get_canonical_factor(canonical_name)
