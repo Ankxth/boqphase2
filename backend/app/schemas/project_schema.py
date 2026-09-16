@@ -153,6 +153,15 @@ class ProjectSchema(BaseModel):
     # every project that existed before this field did belongs to
     # Provident.
     company_id: str = "provident"
+    # Workstream 11: a human-readable label ("Ecopolitan Tower"), distinct
+    # from project_id (a uuid or caller-supplied slug -- see
+    # app/api/form.py's build_project_schema). Optional and defaults to
+    # None so every pre-Workstream-11 project file loads in unchanged; a
+    # project with no name falls back to displaying its own project_id,
+    # see app/services/phase3.py's list_projects(). Not wrapped in a
+    # FieldValue like the tiered fields below -- it has no provenance/
+    # confidence concept, it's just a label the user typed in.
+    project_name: Optional[str] = None
     mandatory: MandatoryFields = MandatoryFields()
     tier2: Tier2Fields = Tier2Fields()
     tier3: Tier3Fields = Tier3Fields()

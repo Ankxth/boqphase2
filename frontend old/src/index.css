@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette -- blueprint / structural drawing, not eco-startup green.
+     Carried over unchanged from the boq-carbon-frontend aesthetic. */
+  --color-ink: #1B2530;        /* blueprint ink -- dark surfaces/text */
+  --color-paper: #EDEFF2;      /* drawing paper -- light background */
+  --color-paper-dim: #DCE0E5;  /* paper shade for panels */
+  --color-cyan: #4A7C8C;       /* blueprint cyan -- structural accent */
+  --color-cyan-dim: #B9CBD2;   /* faded cyan for grid lines */
+  --color-safety: #C4531D;     /* site-safety orange -- flags/warnings */
+  --color-concrete: #7A8B7F;   /* concrete grey-green -- material tags */
+  --color-carbon-down: #2E7D5B;/* carbon saved -- positive delta only */
+
+  --font-display: "Barlow Condensed", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.blueprint-grid {
+  background-image:
+    linear-gradient(var(--color-cyan-dim) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-cyan-dim) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-color: var(--color-paper);
+}
+
+.ledger {
+  position: relative;
+  background: white;
+  border: 1px solid var(--color-ink);
+}
+.ledger::before,
+.ledger::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: var(--color-cyan);
+  border-style: solid;
+}
+.ledger::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.ledger::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+.spec-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-concrete);
+}
+
+.data-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.rev-stamp {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--color-cyan);
+  color: var(--color-cyan);
+  padding: 2px 8px;
+}
+
+.field-input {
+  font-family: var(--font-body);
+  font-size: 14px;
+  border: 1px solid rgba(27, 37, 48, 0.4);
+  background: white;
+  padding: 8px 10px;
+  width: 100%;
+}
+.field-input:focus {
+  outline: none;
+  border-color: var(--color-cyan);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+/* --- Added for this project's review step ---
+   The BOQ-standardizer frontend only had two confidence tiers
+   (>=0.7 vs below). This project's ProjectSchema has four distinct
+   provenance tiers per field (user-entered, own-boq-extracted,
+   boq-matched, llm-estimated) plus "unset" -- each needs its own visual
+   weight so a reviewer can tell at a glance which fields are real data
+   vs a borrowed proxy vs a generic guess, not just "confident or not". */
+.source-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.source-user-entered {
+  border-color: var(--color-carbon-down);
+  color: var(--color-carbon-down);
+}
+.source-own-boq-extracted {
+  border-color: var(--color-cyan);
+  color: var(--color-cyan);
+  background: rgba(74, 124, 140, 0.08);
+}
+.source-boq-matched {
+  border-color: var(--color-concrete);
+  color: var(--color-concrete);
+}
+.source-llm-estimated {
+  border-color: var(--color-safety);
+  color: var(--color-safety);
+}
+.source-unset {
+  border-color: rgba(27, 37, 48, 0.25);
+  color: rgba(27, 37, 48, 0.4);
+}
+
+/* A softer ledger variant for informational/disclaimer boxes that
+   aren't errors -- the original .ledger + safety-orange border was
+   reserved for warnings; this project needs a neutral "here's an
+   important caveat" tone much more often (GRIHA/cost disclaimers). */
+.ledger-note {
+  background: white;
+  border: 1px solid var(--color-cyan-dim);
+  border-left: 3px solid var(--color-cyan);
+}

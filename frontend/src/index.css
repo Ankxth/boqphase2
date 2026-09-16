@@ -1,139 +1,196 @@
 @import "tailwindcss";
 
 @theme {
-  /* Palette -- blueprint / structural drawing, not eco-startup green.
-     Carried over unchanged from the boq-carbon-frontend aesthetic. */
-  --color-ink: #1B2530;        /* blueprint ink -- dark surfaces/text */
-  --color-paper: #EDEFF2;      /* drawing paper -- light background */
-  --color-paper-dim: #DCE0E5;  /* paper shade for panels */
-  --color-cyan: #4A7C8C;       /* blueprint cyan -- structural accent */
-  --color-cyan-dim: #B9CBD2;   /* faded cyan for grid lines */
-  --color-safety: #C4531D;     /* site-safety orange -- flags/warnings */
-  --color-concrete: #7A8B7F;   /* concrete grey-green -- material tags */
-  --color-carbon-down: #2E7D5B;/* carbon saved -- positive delta only */
+  /* ---- surfaces ---- */
+  --color-bg: #0b0c09;
+  --color-bg-raised: #14160f;
+  --color-bg-card: #171912;
+  --color-bg-inset: #080906;
+  --color-line: rgba(243, 241, 231, 0.09);
+  --color-line-strong: rgba(243, 241, 231, 0.16);
 
-  --font-display: "Barlow Condensed", sans-serif;
-  --font-body: "Inter", sans-serif;
-  --font-mono: "IBM Plex Mono", monospace;
+  /* ---- ink ---- */
+  --color-ink: #f3f1e7;
+  --color-ink-soft: #a9a797;
+  --color-ink-faint: #6e6c5e;
+
+  /* ---- accents ---- */
+  --color-coral: #ff6a3d;
+  --color-coral-dim: #c74f28;
+  --color-coral-soft: rgba(255, 106, 61, 0.14);
+  --color-moss: #8fae66;
+  --color-moss-dim: #6b8a49;
+  --color-moss-soft: rgba(143, 174, 102, 0.14);
+  --color-amber: #e8a94b;
+  --color-amber-soft: rgba(232, 169, 75, 0.14);
+  --color-rust: #d2604a;
+  --color-rust-soft: rgba(210, 96, 74, 0.14);
+
+  /* ---- type ---- */
+  --font-display: "Clash Display", "Switzer", ui-sans-serif, sans-serif;
+  --font-sans: "Switzer", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-marquee: marquee 28s linear infinite;
+  --animate-pulse-ring: pulse-ring 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(255, 106, 61, 0.35);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(255, 106, 61, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(255, 106, 61, 0);
+    }
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
-  background-color: var(--color-paper);
-  color: var(--color-ink);
-  font-family: var(--font-body);
-}
-
-.blueprint-grid {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
   background-image:
-    linear-gradient(var(--color-cyan-dim) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-cyan-dim) 1px, transparent 1px);
-  background-size: 28px 28px;
-  background-color: var(--color-paper);
+    radial-gradient(ellipse 900px 500px at 12% -10%, rgba(255, 106, 61, 0.10), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(143, 174, 102, 0.07), transparent 55%),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 3px);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
-.ledger {
-  position: relative;
-  background: white;
-  border: 1px solid var(--color-ink);
-}
-.ledger::before,
-.ledger::after {
-  content: "";
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-color: var(--color-cyan);
-  border-style: solid;
-}
-.ledger::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
-.ledger::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
-
-.spec-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-concrete);
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.04;
 }
 
-.data-num {
-  font-family: var(--font-mono);
+::selection {
+  background: var(--color-coral-soft);
+  color: var(--color-coral);
+}
+
+/* thin, dark, unobtrusive scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabular {
   font-variant-numeric: tabular-nums;
 }
 
-.rev-stamp {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--color-cyan);
-  color: var(--color-cyan);
-  padding: 2px 8px;
+/* neumorphic-pill surfaces on a dark ground: a soft raised highlight +
+   deep recessed shadow, tuned low so it reads as "app chrome," not
+   skeuomorphic cosplay */
+.neu-raised {
+  box-shadow:
+    -6px -6px 14px rgba(255, 255, 255, 0.02),
+    8px 10px 22px rgba(0, 0, 0, 0.45);
+}
+.neu-inset {
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.5),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.02);
+}
+.neu-pill {
+  box-shadow:
+    -4px -4px 10px rgba(255, 255, 255, 0.025),
+    6px 8px 18px rgba(0, 0, 0, 0.5);
+}
+.neu-pill:active {
+  box-shadow:
+    inset 2px 2px 6px rgba(0, 0, 0, 0.4),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.02);
 }
 
-.field-input {
-  font-family: var(--font-body);
-  font-size: 14px;
-  border: 1px solid rgba(27, 37, 48, 0.4);
-  background: white;
-  padding: 8px 10px;
-  width: 100%;
-}
-.field-input:focus {
-  outline: none;
-  border-color: var(--color-cyan);
-}
-
-.status-dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
+.slider-track {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
   border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+}
+.slider-track::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  border: 3px solid var(--color-coral);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.slider-track::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+}
+.slider-track::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  border: 3px solid var(--color-coral);
+  cursor: pointer;
+}
+.slider-track::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
 }
 
-/* --- Added for this project's review step ---
-   The BOQ-standardizer frontend only had two confidence tiers
-   (>=0.7 vs below). This project's ProjectSchema has four distinct
-   provenance tiers per field (user-entered, own-boq-extracted,
-   boq-matched, llm-estimated) plus "unset" -- each needs its own visual
-   weight so a reviewer can tell at a glance which fields are real data
-   vs a borrowed proxy vs a generic guess, not just "confident or not". */
-.source-tag {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border: 1px solid;
-  white-space: nowrap;
+.grain {
+  position: relative;
 }
-.source-user-entered {
-  border-color: var(--color-carbon-down);
-  color: var(--color-carbon-down);
-}
-.source-own-boq-extracted {
-  border-color: var(--color-cyan);
-  color: var(--color-cyan);
-  background: rgba(74, 124, 140, 0.08);
-}
-.source-boq-matched {
-  border-color: var(--color-concrete);
-  color: var(--color-concrete);
-}
-.source-llm-estimated {
-  border-color: var(--color-safety);
-  color: var(--color-safety);
-}
-.source-unset {
-  border-color: rgba(27, 37, 48, 0.25);
-  color: rgba(27, 37, 48, 0.4);
-}
-
-/* A softer ledger variant for informational/disclaimer boxes that
-   aren't errors -- the original .ledger + safety-orange border was
-   reserved for warnings; this project needs a neutral "here's an
-   important caveat" tone much more often (GRIHA/cost disclaimers). */
-.ledger-note {
-  background: white;
-  border: 1px solid var(--color-cyan-dim);
-  border-left: 3px solid var(--color-cyan);
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 0.6px, transparent 0.6px);
+  background-size: 3px 3px;
+  mix-blend-mode: overlay;
 }

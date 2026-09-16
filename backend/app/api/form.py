@@ -55,6 +55,12 @@ class FormSubmission(BaseModel):
     # about companies yet keeps working exactly as before.
     company_id: Optional[str] = None
 
+    # Workstream 11: a human-readable label for this project, e.g.
+    # "Ecopolitan Tower" -- see ProjectSchema.project_name's own comment.
+    # Optional; omitting it leaves the project unnamed (display falls
+    # back to project_id).
+    project_name: Optional[str] = None
+
     # mandatory
     gfa_sqm: Optional[float] = None
     location: Optional[str] = None
@@ -91,6 +97,7 @@ def build_project_schema(submission: FormSubmission, project_id: Optional[str] =
     return ProjectSchema(
         project_id=project_id or str(uuid.uuid4()),
         company_id=submission.company_id or company_store.DEFAULT_COMPANY_ID,
+        project_name=submission.project_name,
         mandatory=MandatoryFields(
             gfa_sqm=_user_field(submission.gfa_sqm),
             location=_user_field(submission.location),
@@ -160,6 +167,12 @@ def edit_project(
 
     edits_dict = edits.model_dump(exclude_unset=True)
     edits_dict.pop("company_id", None)  # routing, not an editable tier field -- see get_project's own note
+    if "project_name" in edits_dict:
+        # Workstream 11: a plain top-level label, not a FieldValue-wrapped
+        # tier field -- must be handled before the mandatory/tier2/tier3
+        # routing loop below, which would otherwise try (and fail) to
+        # setattr it onto project.tier3 as its fallback branch.
+        project.project_name = edits_dict.pop("project_name")
     for field_name, value in edits_dict.items():
         if value is None:
             continue

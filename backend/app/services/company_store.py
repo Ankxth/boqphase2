@@ -94,6 +94,32 @@ def onboarding_job_path(company_id: str, job_id: str) -> Path:
     return onboarding_jobs_dir(company_id) / f"{job_id}.json"
 
 
+def project_dir(company_id: str, project_id: str) -> Path:
+    """Workstream 10: a per-project DIRECTORY for Phase 3 data (bills,
+    the Phase 3 baseline) -- deliberately separate from
+    projects_dir(company_id) / f"{project_id}.json" (the Phase 1 project
+    record FILE projects_dir() already resolves via project_store.py).
+    The two coexist without colliding: 'projects/<id>.json' is a file,
+    'projects/<id>/' is a directory -- same parent, different path shape,
+    same convention project_store.py's own docstring already established
+    ("swapping this for a real database later means changing only this
+    file").
+    """
+    return projects_dir(company_id) / project_id
+
+
+def phase3_baseline_path(company_id: str, project_id: str) -> Path:
+    return project_dir(company_id, project_id) / "phase3_baseline.json"
+
+
+def project_bills_dir(company_id: str, project_id: str) -> Path:
+    return project_dir(company_id, project_id) / "bills"
+
+
+def project_bill_path(company_id: str, project_id: str, period: str) -> Path:
+    return project_bills_dir(company_id, project_id) / f"{period}.json"
+
+
 def canonical_categories_path() -> Path:
     """Workstream 05: the ONE thing in this module that is deliberately
     NOT company-scoped. A company's own item-code -> category mapping is

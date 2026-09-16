@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import boq_carbon, boq_carbon_substitute, calculate, factors, form, onboarding, refine, substitute, wo_carbon
+from app.api import boq_carbon, boq_carbon_substitute, calculate, factors, form, onboarding, phase3, refine, substitute, wo_carbon
 
 app = FastAPI(title="Conceptual Carbon Calculator API")
 
@@ -28,6 +28,7 @@ app.include_router(boq_carbon_substitute.router)  # Phase 2: material substituti
 app.include_router(wo_carbon.router)  # Phase 2 (WS02): raw-Work-Order-in, carbon-out -- wo_carbon_engine's first HTTP endpoint
 app.include_router(onboarding.router)  # WS05: per-company item-code & Work-Order onboarding pipeline
 app.include_router(factors.router)  # WS09: read-only versioned emission-factor history
+app.include_router(phase3.router)  # WS10: Phase 3 -- project baseline, periodic bills, running-carbon dashboard
 
 
 @app.get("/health")
