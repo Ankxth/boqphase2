@@ -6,6 +6,13 @@ name: Tests
 # themselves changed to make this possible; this file just runs the same
 # `pytest -v` command documented in every prior workstream's delivery
 # message, on GitHub's own runners.
+#
+# Lives at the REPO ROOT (the "project" folder that also holds frontend/
+# and docs/), i.e. <repo-root>/.github/workflows/tests.yml -- GitHub only
+# ever looks for workflow files there, never inside a subfolder like
+# backend/.github/workflows/. Every step below explicitly runs inside
+# backend/ (via working-directory) since that's where pytest.ini,
+# requirements.txt, app/, and tests/ actually live within the repo.
 
 on:
   push:
@@ -17,6 +24,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     # The full suite includes real PDF extraction (pdfplumber, pure
     # Python -- see Workstream 03) against two multi-hundred-page real
     # Work Orders, which is genuinely slow (observed 8-20 minutes
@@ -34,6 +44,7 @@ jobs:
           # delivery message) -- not just "whatever's latest".
           python-version: "3.10"
           cache: "pip"
+          cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
         run: pip install -r requirements.txt
